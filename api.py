@@ -8,13 +8,14 @@ Author: Eemil Hyvari, Antti Luukkonen and Oskar Byman
 import json
 from flask import Flask, Response, request
 from flask_restful import Api, Resource
+from flask_sqlalchemy import SQLAlchemy
 from typing import Union
 import models
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///test.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-db = models.db
+db = SQLAlchemy(app)
 api = Api(app)
 
 class UserCollection(Resource):
