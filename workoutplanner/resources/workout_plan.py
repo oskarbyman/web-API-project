@@ -4,7 +4,7 @@ from flask_restful import Resource
 from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
 from typing import Union
-from models import *
+from workoutplanner.models import *
 from workoutplanner import db
 
 class WorkoutPlanCollection(Resource):

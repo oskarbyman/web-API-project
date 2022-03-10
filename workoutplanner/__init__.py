@@ -25,4 +25,10 @@ def create_app(test_config=None):
         pass
     
     db.init_app(app)
+
+    from . import api
+    from . import models
+
+    app.register_blueprint(api.api_bp)
+
     return app
