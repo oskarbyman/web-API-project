@@ -252,6 +252,6 @@ class MoveListItemItem(Resource):
                 for item in MoveListItem.query.filter(plan_id == plan_id, user_id == user_id, position > position).all():
                     item.position -= 1
                 db.session.commit()
-            return Response(status=200)
+                return Response(status=200)
         else:
             raise MethodNotAllowed
