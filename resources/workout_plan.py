@@ -5,6 +5,7 @@ from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
 from typing import Union
 from models import *
+from workoutplanner import db
 
 class WorkoutPlanCollection(Resource):
     """
@@ -62,6 +63,9 @@ class WorkoutPlanItem(Resource):
     """
 
     def put(self, user, workout) -> Union[Response, tuple[str, int]]:
+        """
+        Replaces a users workouts name
+        """
         try:
             if request.json == None:
                 raise UnsupportedMediaType
@@ -83,7 +87,9 @@ class WorkoutPlanItem(Resource):
             return "Incomplete request", 400
 
     def get(self, workout, user=None) -> tuple[list, int]:
-
+        """
+        Gets all workouts or all of a certain users workouts
+        """
         if user:
             user_id = User.query.get(user).id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
@@ -93,3 +99,18 @@ class WorkoutPlanItem(Resource):
             raise NotFound
         return query_result, 200
 
+    def delete(self, user, workout):
+        """
+        Allows deletion of a users workout
+        Obviously requires the user to be authenticated, but auth is not implemented yet
+        """
+        if user and workout:
+            user_id = User.query.get(user).id
+            query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
+            if not query_result:
+                raise NotFound
+            else:
+                db.session.delete(query_result)
+                db.session.commit()
+        else:
+            raise MethodNotAllowed

@@ -5,6 +5,7 @@ from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
 from typing import Union
 from models import *
+from workoutplanner import db
 
 class MoveCollection(Resource):
     """
@@ -117,3 +118,20 @@ class MoveItem(Resource):
                 }
             )
         return moves, 200
+
+    def delete(self, user, move):
+        """
+        Allows deletion of a users workout
+        Obviously requires the user to be authenticated, but auth is not implemented yet
+        """
+        if user and move:
+            user_id = User.query.get(user).id
+            query_result = Move.query.filter_by(name=move, user_id=user_id).first()
+            if not query_result:
+                raise NotFound
+            else:
+                db.session.delete(query_result)
+                db.session.commit()
+        else:
+            raise MethodNotAllowed
+

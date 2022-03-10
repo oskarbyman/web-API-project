@@ -5,6 +5,7 @@ from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
 from typing import Union
 from models import *
+from workoutplanner import db
 
 class UserCollection(Resource):
     """
@@ -31,8 +32,8 @@ class UserCollection(Resource):
         except IntegrityError:
             db.session.rollback()
             raise Conflict(
-                409,
-                "User already exists"
+                "User already exists",
+                409
             )
 
     def get(self) -> tuple[list, int]:
@@ -77,3 +78,12 @@ class UserItem(Resource):
             raise NotFound
 
         return query_result, 200
+
+    def delete(self, user):
+
+        query_result = User.query.filter_by(username=user).first()
+        if not query_result:
+            raise NotFound
+        else:
+            db.session.delete(query_result)
+            db.session.commit()
