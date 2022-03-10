@@ -1,0 +1,32 @@
+api
+├——User
+|   ├——moves
+|   |   ╰——{move}
+|   |
+|   ╰——workouts
+|       ╰——{workout}
+|           ╰——moves
+|               ╰——{move_list_item}
+|   
+├——moves
+|    ╰——{move}
+|
+╰——workouts
+    ╰——{workout}
+
+
+___________________________________________________________________________________________________________
+|   resource            |URI                                                        |GET|POST |PUT|DELETE |
+|users collection       |/api/users                                                 | X |  X  |   |       |
+|user item              |/api/users/{user}                                          | X |     | X |   X   |
+|moves by user          |/api/users/{user}/moves                                    | X |  X  |   |       |
+|user's move            |/api/users/{user}/moves/{move}                             | X |     | X |   X   |
+|workouts by user       |/api/users/{user}/workouts                                 | X |  X  |   |       |
+|user's workout         |/api/users/{user}/workouts/{workout}                       | X |     | X |   X   |
+|moves in user's workout|/api/users/{user}/workouts/{workout}/moves                 | X |  X  |   |       |
+|move in user's workout |/api/users/{user}/workouts/{workout}/moves/{move_list_item}| X |     | X |   X   |
+|moves collection       |/api/moves                                                 | X |  X  |   |       |
+|move item              |/api/moves/{move}                                          | X |     |   |       |
+|workouts collection    |/api/workouts/                                             | X |  X  |   |       |
+|workout item           |/api/workouts/{workout}                                    | X |     |   |       |
+‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
