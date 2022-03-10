@@ -70,16 +70,16 @@ class UserItem(Resource):
         db.session.commit()
         return Response(url_for(user), status=200)
 
-    def get(self, user) -> tuple[list, int]:
+    def get(self, user) -> tuple[str, int]:
 
         query_result = User.query.filter_by(username=user).first()
 
         if not query_result:
             raise NotFound
+        result = query_result.username
+        return result, 200
 
-        return query_result, 200
-
-    def delete(self, user):
+    def delete(self, user: str) -> Response:
 
         query_result = User.query.filter_by(username=user).first()
         if not query_result:
@@ -87,3 +87,4 @@ class UserItem(Resource):
         else:
             db.session.delete(query_result)
             db.session.commit()
+            return Response(status=200)
