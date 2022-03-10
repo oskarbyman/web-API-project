@@ -1,36 +1,42 @@
-from models import db, User, WorkoutPlan, MoveList, Move
+from workoutplanner import create_app, db
+from workoutplanner.models import User, WorkoutPlan, MoveListItem, Move
 
+#Utility functions to create and populate db
 def create_db():
-    db.create_all()
+    app = create_app()
+    with app.app_context():
+        db.create_all()
 
 def populate_db():
-    u1 = User(username="ProAthlete35")
-    u2 = User(username="Noob")
+    app = create_app()
+    with app.app_context():
+        u1 = User(username="ProAthlete35")
+        u2 = User(username="Noob")
 
-    db.session.add(u1)
-    db.session.add(u2)
-    db.session.commit()
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.commit()
 
-    m1 = Move(name="Push Up", user=u1)
-    m2 = Move(name="Opening Fridge", user=u1)
-    m3 = Move(name="Plank", user=u2)
+        m1 = Move(name="Push Up", description="Push your body up with your hands", user=u1)
+        m2 = Move(name="Opening Fridge", description="Walk to the nearest fridge and open it", user=u1)
+        m3 = Move(name="Plank", description="Use your muscles to keep your body in a straight horizontal line", user=u2)
 
-    db.session.add(m1)
-    db.session.add(m2)
-    db.session.add(m3)
-    db.session.commit()
+        db.session.add(m1)
+        db.session.add(m2)
+        db.session.add(m3)
+        db.session.commit()
 
-    p1 = WorkoutPlan(name="Light Exercise", user=u1)
-    p2 = WorkoutPlan(name="Max Suffering", user=u2)
+        p1 = WorkoutPlan(name="Light Exercise", user=u1)
+        p2 = WorkoutPlan(name="Max Suffering", user=u2)
 
-    db.session.add(p1)
-    db.session.add(p2)
-    db.session.commit()
+        db.session.add(p1)
+        db.session.add(p2)
+        db.session.commit()
 
-    p1.workout_moves.append(MoveList(move=m1))
-    p1.workout_moves.append(MoveList(move=m3))
-    p1.workout_moves.append(MoveList(move=m1))
+        p1.workout_moves.append(MoveListItem(move=m1))
+        p1.workout_moves.append(MoveListItem(move=m3))
+        p1.workout_moves.append(MoveListItem(move=m1))
 
-    p2.workout_moves.append(MoveList(move=m2, repetitions=4))
+        p2.workout_moves.append(MoveListItem(move=m2, repetitions=4))
 
-    db.session.commit()
+        db.session.commit()
