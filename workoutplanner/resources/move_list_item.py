@@ -80,7 +80,7 @@ class MoveListItemCollection(Resource):
                 "Move already exists"
             )
 
-    def get(self, workout: str, user: str=None) -> list:
+    def get(self, workout: str, user: str=None) -> tuple[list, int]:
         """
         Allows GET from the following URIs:
         /api/workouts/{workout}/moves
@@ -205,7 +205,7 @@ class MoveListItemItem(Resource):
             db.session.commit()
             return Response(url_for(move_list_item), status=200)
 
-    def get(self, workout: str, position: int, user: str=None) -> dict:
+    def get(self, workout: str, position: int, user: str=None) -> tuple[dict, int]:
         """
         Allows GET from the following URIs:
         /api/workouts/{workout}/moves/{move_list_item}
