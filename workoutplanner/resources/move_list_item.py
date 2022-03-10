@@ -1,11 +1,8 @@
-import json
-from unicodedata import name
 from flask import Response, request, url_for
 from flask_restful import Resource
 from jsonschema import validate, ValidationError
-from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
-from typing import Union
-from models import *
+from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed
+from workoutplanner.models import *
 from workoutplanner import db
 
 class MoveListItemCollection(Resource):
@@ -18,7 +15,11 @@ class MoveListItemCollection(Resource):
     /api/workouts/{workout}/moves, GET
     /api/users/{user}/workouts/{workout}/moves, GET, POST
     """
-    def post(self, user=None, workout=None):
+    def post(self, user: str=None, workout: str=None) -> Response:
+        """
+        Allows POST to the following URI(s):
+        /api/users/{user}/workouts/{workout}/moves
+        """
         try:
             if request.json == None:
                 raise UnsupportedMediaType
@@ -78,9 +79,11 @@ class MoveListItemCollection(Resource):
                 "Move already exists"
             )
 
-    def get(self, user=None, workout=None):
+    def get(self, workout: str, user: str=None) -> list:
         """
-        
+        Allows GET from the following URIs:
+        /api/workouts/{workout}/moves
+        /api/users/{user}/workouts/{workout}/moves
         """
         moves = []
         if user and workout:
@@ -89,36 +92,26 @@ class MoveListItemCollection(Resource):
             plan_id  = WorkoutPlan.query.filter_by(user=user, name=workout).first().id
             if not plan_id:
                 raise NotFound(f"The user {user} or their workout {workout} does not exist")
-            query = MoveListItem.query.filter_by(plan_id=plan_id).all()
-            for move in query:
-                moves.append(
-                    {
-                        "name": Move.query.filter_by(id=move.move_id).first().name,
-                        "creator": User.query.get(
-                                        Move.query.filter_by(id=move.move_id).first().creator_id
-                                    ).username,
-                        "description": Move.query.filter_by(id=move.move_id).first().description,
-                        "repetitions": move.repetitions,
-                        "position": move.position
-                    }
-                )
         elif workout and not user:
             plan_id  = WorkoutPlan.query.filter_by(name=workout).first().id
             if not plan_id:
                 raise NotFound(f"The  workout {workout} does not exist")
-            query = MoveListItem.query.filter_by(plan_id=plan_id).all()
-            for move in query:
-                moves.append(
-                    {
-                        "name": Move.query.filter_by(id=move.move_id).first().name,
-                        "creator": User.query.get(
-                                        Move.query.filter_by(id=move.move_id).first().creator_id
-                                    ).username,
-                        "description": Move.query.filter_by(id=move.move_id).first().description,
-                        "repetitions": move.repetitions,
-                        "position": move.position
-                    }
-                )
+        else:
+            raise MethodNotAllowed
+
+        query = MoveListItem.query.filter_by(plan_id=plan_id).all()
+        for move in query:
+            moves.append(
+                {
+                    "name": Move.query.filter_by(id=move.move_id).first().name,
+                    "creator": User.query.get(
+                                    Move.query.filter_by(id=move.move_id).first().creator_id
+                                ).username,
+                    "description": Move.query.filter_by(id=move.move_id).first().description,
+                    "repetitions": move.repetitions,
+                    "position": move.position
+                }
+            )
         return moves, 200
 
 
@@ -132,7 +125,13 @@ class MoveListItemItem(Resource):
     /api/users/{user}/workouts/{workout}/moves/{move_list_item}, GET, PUT, DELETE
     """
 
-    def put(self, user=None, workout=None, position=None):
+    def put(self, user: str=None, workout: str=None, position: int=None) -> Response:
+        """
+        Allows PUT the the following URIs:
+        /api/users/{user}/workouts/{workout}/moves/{move_list_item}
+            Where move_list_item is the position of the move, i.e. the array index of it.
+        """
+
         try:
             validate(request.json, MoveListItem.json_schema())
         except ValidationError as e:
@@ -144,21 +143,18 @@ class MoveListItemItem(Resource):
             if workout and user and position:
                 #  Id:s
                 user_id = User.query.filter_by(username=user).first().id
-                plan_id = WorkoutPlan.query.filter_by(name=workout, user=user_id).first().id
-                move_id = Move.query.filter_by(name=request.json["move_name"]).first().id
                 if not user_id:
                     raise NotFound(f"No such user as {user} found")
+
+                plan_id = WorkoutPlan.query.filter_by(name=workout, user=user_id).first().id
                 if not plan_id:
                     raise NotFound(f"No such workout as {workout} found")
+
+                move_id = Move.query.filter_by(name=request.json["move_name"]).first().id
                 if not move_id:
                     move_name = request.json["move_name"]
                     raise NotFound(f"No such move as {move_name} found")
-                #  Get the current Move list item object
-                move_list_item = MoveListItem.query.filter_by(position=position, plan_id=plan_id).first()
-                if not move_list_item:
-                    raise NotFound(f"No move at position {position}")
-                #  Change the 
-                move_list_item.move_id = move_id
+
                 if "position" in request.json:
                     #  Get all current moves in workout plan
                     current_moves = MoveListItem.query.filter(plan_id == plan_id).all()
@@ -167,33 +163,94 @@ class MoveListItemItem(Resource):
                     #  If the requested position is larger than the currently last position
                     #  Set it to the length of the movelist array, else set the requested value
                     if request.json["position"] > last_position:
-                        position = len(MoveListItem.query.filter_by(plan_id=plan_id).all())
+                        new_position = len(MoveListItem.query.filter_by(plan_id=plan_id).all())
                     else:
-                        position = request.json["position"]
+                        new_position = request.json["position"]
                     #  Queries current positions of the moves in the same plan 
                     #  with a position equal or larger than the on in the request.
                     #  Returns an empty list if the position does not exist
                     #  Increments the current positions with one to enable inserting the new position
-                    current_moves = MoveListItem.query.filter(plan_id == plan_id, position >= position).all()
+                    current_moves = MoveListItem.query.filter(plan_id == plan_id, position >= new_position).all()
                     for current_move in current_moves:
                         current_move.position += 1
                 else:
                     #  If the position was not present in the request set it to the last position in the plan.
                     #  The next free index will be the length of the result array
-                    current_position = len(MoveListItem.query.filter_by(plan_id=plan_id).all())
-                    position = current_position
+                    new_position = position
+
+                if "repetitions" in request.json:
+                    new_repetitions = request.json["repetitions"]
+                else:
+                    new_repetitions = None
+                #  Get the current Move list item object
+                move_list_item = MoveListItem.query.filter_by(position=position, plan_id=plan_id).first()
+                if not move_list_item:
+                    db.session.rollback()
+                    raise NotFound(f"No move at position {position}")
+
+                #  Change the values of the requested move list object
+                move_list_item.move_id = move_id
+                move_list_item.position = new_position
+                move_list_item.repetitions = new_repetitions
             else:
                 raise MethodNotAllowed
-            db.session.commit()
-            return Response(url_for(move_list_item), status=200)
         except KeyError as e:
+            db.session.rollback()
             raise BadRequest(e)
         except IntegrityError:
             db.session.rollback()
             raise Conflict("Move already exists")
+        else:
+            db.session.commit()
+            return Response(url_for(move_list_item), status=200)
 
-    def get(self, user, workout, position):
-        pass
+    def get(self, workout: str, position: int, user: str=None) -> dict:
+        """
+        Allows GET from the following URIs:
+        /api/workouts/{workout}/moves/{move_list_item}
+        /api/users/{user}/workouts/{workout}/moves/{move_list_item}
+            Where move_list_item is the position of the move, i.e. the array index of it.
+        """
+        if user:
+            user_id = User.query.get(user).id
+            plan_id = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first().id
+            query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
+        else:
+            plan_id = WorkoutPlan.query.filter_by(name=workout).first().id
+            query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
+        if not query_result:
+            raise NotFound(f"No such move exists")
+        result = {
+            "name": Move.query.filter_by(id=query_result.move_id).first().name,
+            "creator": User.query.get(
+                            Move.query.filter_by(id=query_result.move_id).first().creator_id
+                        ).username,
+            "description": Move.query.filter_by(id=query_result.move_id).first().description,
+            "repetitions": query_result.repetitions,
+            "position": query_result.position
+        }
+        return result, 200
 
-    def delete(self, user, workout, position):
-        pass
+    def delete(self, user: str, workout: str, position: int) -> Response:
+        """
+        Allows deletion of a users workout
+        Obviously should require the user to be authenticated, but auth is not implemented yet
+        Allows DELETE of the following URIs:
+        /api/users/{user}/workouts/{workout}/moves/{move_list_item}
+            Where move_list_item is the position of the move, i.e. the array index of it.
+        """
+        if user and workout and position:
+            user_id = User.query.get(user).id
+            plan_id = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
+            query_result = MoveListItem.query.filter_by(plan_id=plan_id, user_id=user_id, position=position).first()
+            if not query_result:
+                raise NotFound
+            else:
+                db.session.delete(query_result)
+                #  Reduce all list item positions that were larger than the deleted position
+                for item in MoveListItem.query.filter(plan_id == plan_id, user_id == user_id, position > position).all():
+                    item.position -= 1
+                db.session.commit()
+            return Response(status=200)
+        else:
+            raise MethodNotAllowed
