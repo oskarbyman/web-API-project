@@ -35,7 +35,7 @@ class WorkoutPlanCollection(Resource):
                     raise BadRequest(description=str(e))
                 
                 name  = request.json["name"]
-                user_id = User.query.get(username=request.json["username"]).id
+                user_id = User.query.filter_by(username=request.json["username"]).first().id
 
                 plan = WorkoutPlan(name=name, user_id=user_id)
 
@@ -61,7 +61,7 @@ class WorkoutPlanCollection(Resource):
         plans = []
         #   If user is specified only gets workouts made by the user, else gets them all
         if user:
-            user_id = User.query.get(username=request.json["username"]).id
+            user_id = User.query.filter_by(username=request.json["username"]).first().id
             query = WorkoutPlan.query.filter_by(user_id=user_id).all()
         else:
             query = WorkoutPlan.query.all()
@@ -99,7 +99,7 @@ class WorkoutPlanItem(Resource):
             except ValidationError as e:
                 raise BadRequest(description=str(e))
 
-            user_id = User.query.get(user).id
+            user_id = User.query.filter_by(username=user).first().id
             current_workout = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
             if not current_workout:
                 raise NotFound
@@ -120,7 +120,7 @@ class WorkoutPlanItem(Resource):
         /api/workouts/{workout}
         """
         if user:
-            user_id = User.query.get(user).id
+            user_id = User.query.filter_by(username=user).first().id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
         else:
             query_result = WorkoutPlan.query.filter_by(name=workout).first()
@@ -141,7 +141,7 @@ class WorkoutPlanItem(Resource):
             /api/users/{user}/workouts/{workout}
         """
         if user and workout:
-            user_id = User.query.get(user).id
+            user_id = User.query.filter_by(username=user).first().id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
             if not query_result:
                 raise NotFound

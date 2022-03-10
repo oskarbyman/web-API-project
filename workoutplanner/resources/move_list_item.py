@@ -213,7 +213,7 @@ class MoveListItemItem(Resource):
             Where move_list_item is the position of the move, i.e. the array index of it.
         """
         if user:
-            user_id = User.query.get(user).id
+            user_id = User.query.filter_by(username=user).first().id
             plan_id = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first().id
             query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
         else:
@@ -241,7 +241,7 @@ class MoveListItemItem(Resource):
             Where move_list_item is the position of the move, i.e. the array index of it.
         """
         if user and workout and position:
-            user_id = User.query.get(user).id
+            user_id = User.query.filter_by(username=user).first().id
             plan_id = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
             query_result = MoveListItem.query.filter_by(plan_id=plan_id, user_id=user_id, position=position).first()
             if not query_result:
