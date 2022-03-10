@@ -2,6 +2,7 @@ from api import db
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.orderinglist import ordering_list
+import json
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -10,6 +11,10 @@ class User(db.Model):
     user_moves = db.relationship("Move", back_populates="user")
     workouts = db.relationship("WorkoutPlan", back_populates="user")
 
+    @staticmethod
+    def json_schema():
+        return json.loads("schemas/user_schema.json")
+
 class WorkoutPlan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
@@ -17,9 +22,13 @@ class WorkoutPlan(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", back_populates="workouts", uselist=False)
-    workout_moves = db.relationship("MoveList", back_populates="plan", order_by="MoveList.position", collection_class=ordering_list("position"))
+    workout_moves = db.relationship("MoveListItem", back_populates="plan", order_by="MoveListItem.position", collection_class=ordering_list("position"))
 
-class MoveList(db.Model):
+    @staticmethod
+    def json_schema():
+        return json.loads("schemas/workout_plan_schema.json")
+
+class MoveListItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     position = db.Column(db.Integer, nullable=False)
 
@@ -31,13 +40,22 @@ class MoveList(db.Model):
     move = db.relationship("Move", back_populates="workout_move", uselist=False)
     plan = db.relationship("WorkoutPlan", back_populates="workout_moves", uselist=False)
 
+    @staticmethod
+    def json_schema():
+        return json.loads("schemas/move_item_schema.json")
+
 class Move(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.string(64), nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", back_populates="user_moves", uselist=False)
-    workout_move = db.relationship("MoveList", back_populates="move")
+    workout_move = db.relationship("MoveListItem", back_populates="move")
+
+    @staticmethod
+    def json_schema():
+        return json.loads("schemas/move_schema.json")
 
 
