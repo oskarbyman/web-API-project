@@ -1,4 +1,4 @@
-import json
+from os import stat
 from flask import Response, request, url_for
 from flask_restful import Resource
 from jsonschema import validate, ValidationError
@@ -10,61 +10,85 @@ from workoutplanner import db
 class WorkoutPlanCollection(Resource):
     """
     Workout plan resource
-    Contains methods for adding 
+    Contains methods for adding a workout and getting all of the workouts
+
+    Covers the following URIs:
+    /api/users/{user}/workouts
+    /api/workouts/
     """
 
-    def post(self) -> Union[Response, tuple[str, int]]:
+    def post(self, user: str=None) -> Response:
+        """
+        Allows POST to the following URI:     
+        /api/users/{user}/workouts
+        """
         try:
-            if request.json == None:
-                raise UnsupportedMediaType
+            if not user:
+                raise MethodNotAllowed
+            else:
+                if request.json == None:
+                    raise UnsupportedMediaType
 
-            try:
-                validate(request.json, WorkoutPlan.json_schema())
-            except ValidationError as e:
-                raise BadRequest(description=str(e))
+                try:
+                    validate(request.json, WorkoutPlan.json_schema())
+                except ValidationError as e:
+                    raise BadRequest(description=str(e))
+                
+                name  = request.json["name"]
+                user_id = User.query.get(username=request.json["username"]).id
 
-            name  = request.json["name"]
-            username = User.query.filter_by(username=request.json["username"])
+                plan = WorkoutPlan(name=name, user_id=user_id)
 
-            plan = WorkoutPlan(name=name, username=username)
-
-            db.session.add(plan)
-            db.session.commit()
-            return Response(url_for(plan), status=200)
+                db.session.add(plan)
+                db.session.commit()
+                return Response(url_for(plan), status=200)
         except KeyError:
-            return "Incomplete request", 400
+            db.session.rollback()
+            raise BadRequest
         except IntegrityError:
             db.session.rollback()
             raise Conflict(
-                409,
-                "Workout plan already exists"
+                "Workout plan already exists",
+                409
             )
 
-    def get(self, name: str="") -> tuple[list, int]:
-        
+    def get(self, user: str=None) -> list:
+        """
+        Allows GET from the following URIs:
+        /api/users/{user}/workouts
+        /api/workouts/
+        """
         plans = []
-        if name:
-            query = WorkoutPlan.query.filter_by(name=name).all()
+        #   If user is specified only gets workouts made by the user, else gets them all
+        if user:
+            user_id = User.query.get(username=request.json["username"]).id
+            query = WorkoutPlan.query.filter_by(user_id=user_id).all()
         else:
             query = WorkoutPlan.query.all()
         for plan in query:
             plans.append(
                 {
                     "name": plan.name,
-                    "creator": User.query.get(plan.username).username
+                    "creator": User.query.get(plan.user_id).username
                 }
             )
         return plans, 200
 
 class WorkoutPlanItem(Resource):
     """
-    Workout plan resource
-    Contains methods for adding 
+    Workout plan item resource
+    Implements methods for handling a single workout
+
+    Covers the following URIs:
+    /api/users/{user}/workouts/{workout}, GET, PUT, DELETE
+    /api/workouts/{workout}, GET
     """
 
     def put(self, user, workout) -> Union[Response, tuple[str, int]]:
         """
         Replaces a users workouts name
+        Allows PUT to the following URI:
+        /api/users/{user}/workouts/{workout}
         """
         try:
             if request.json == None:
@@ -84,11 +108,16 @@ class WorkoutPlanItem(Resource):
             db.session.commit()
             return Response(url_for(current_workout), status=200)
         except KeyError:
-            return "Incomplete request", 400
+            db.session.rollback()
+            raise BadRequest
 
-    def get(self, workout, user=None) -> tuple[list, int]:
+    def get(self, workout: str, user: str=None) -> tuple[dict, int]:
         """
-        Gets all workouts or all of a certain users workouts
+        Gets the requested workout
+
+        Allows GET from the following URIs:
+        /api/users/{user}/workouts/{workout}
+        /api/workouts/{workout}
         """
         if user:
             user_id = User.query.get(user).id
@@ -97,12 +126,19 @@ class WorkoutPlanItem(Resource):
             query_result = WorkoutPlan.query.filter_by(name=workout).first()
         if not query_result:
             raise NotFound
-        return query_result, 200
+        result = {
+            "name": query_result.name,
+            "creator": User.query.get(query_result.user_id).username
+        }
+        return result, 200
 
-    def delete(self, user, workout):
+    def delete(self, user: str, workout: str) -> Response:
         """
         Allows deletion of a users workout
-        Obviously requires the user to be authenticated, but auth is not implemented yet
+        Obviously should require the user to be authenticated, but auth is not implemented yet
+
+        Allows DELETE of the following URI:
+            /api/users/{user}/workouts/{workout}
         """
         if user and workout:
             user_id = User.query.get(user).id
@@ -112,5 +148,6 @@ class WorkoutPlanItem(Resource):
             else:
                 db.session.delete(query_result)
                 db.session.commit()
+                return Response(status=200)
         else:
             raise MethodNotAllowed
