@@ -71,7 +71,8 @@ class MoveListItemCollection(Resource):
             db.session.commit()
             return Response(url_for(move), status=200)
         except KeyError:
-            return "Incomplete request", 400
+            db.session.rollback()
+            raise BadRequest
         except IntegrityError:
             db.session.rollback()
             raise Conflict(
