@@ -84,29 +84,32 @@ class WorkoutPlanItem(Resource):
     /api/workouts/{workout}, GET
     """
 
-    def put(self, user, workout) -> Union[Response, tuple[str, int]]:
+    def put(self, user: str=None, workout: str=None) -> Union[Response, tuple[str, int]]:
         """
         Replaces a users workouts name
         Allows PUT to the following URI:
         /api/users/{user}/workouts/{workout}
         """
         try:
-            if request.json == None:
-                raise UnsupportedMediaType
+            if user and workout:
+                if request.json == None:
+                    raise UnsupportedMediaType
 
-            try:
-                validate(request.json, WorkoutPlan.json_schema())
-            except ValidationError as e:
-                raise BadRequest(description=str(e))
+                try:
+                    validate(request.json, WorkoutPlan.json_schema())
+                except ValidationError as e:
+                    raise BadRequest(description=str(e))
 
-            user_id = User.query.filter_by(username=user).first().id
-            current_workout = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
-            if not current_workout:
-                raise NotFound
-            current_workout.name = request.json["name"]
+                user_id = User.query.filter_by(username=user).first().id
+                current_workout = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
+                if not current_workout:
+                    raise NotFound
+                current_workout.name = request.json["name"]
 
-            db.session.commit()
-            return Response(url_for(current_workout), status=200)
+                db.session.commit()
+                return Response(url_for(current_workout), status=200)
+            else:
+                raise MethodNotAllowed
         except KeyError:
             db.session.rollback()
             raise BadRequest
