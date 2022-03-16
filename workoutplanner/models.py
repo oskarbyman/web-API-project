@@ -17,17 +17,30 @@ class User(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.loads("schemas/user_schema.json")
+        #return json.loads(open("schemas/user_schema.json"))
+        return {
+            "description": "A workout move",
+            "type": "object",
+            "required": ["username"],
+            "properties":
+            {
+                "username": {
+                    "description": "An unique username",
+                    "type": "string"
+                }
+            }
+        }
 
 class WorkoutPlan(db.Model):
     """
     Database model for WorkoutPlan. Includes references to the creator of the plan and ordered list of moves in the plan.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
+    #id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(64), primary_key=True)
 
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
 
     user = db.relationship("User", back_populates="workouts", uselist=False)
     workout_moves = db.relationship("MoveListItem", back_populates="plan", order_by="MoveListItem.position", collection_class=ordering_list("position"))
@@ -61,11 +74,13 @@ class Move(db.Model):
     Database model for Move. Includes references to the creator of the move information about the move.
     """
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), nullable=False)
+    #id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, nullable=False)
+    #name = db.Column(db.String(64), nullable=False)
+    name = db.Column(db.String(64), primary_key=True)
     description = db.Column(db.String(256), nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
 
     user = db.relationship("User", back_populates="user_moves", uselist=False)
     workout_move = db.relationship("MoveListItem", back_populates="move")
@@ -73,5 +88,3 @@ class Move(db.Model):
     @staticmethod
     def json_schema():
         return json.loads("schemas/move_schema.json")
-
-
