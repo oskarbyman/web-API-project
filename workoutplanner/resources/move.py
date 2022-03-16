@@ -80,7 +80,6 @@ class MoveItem(Resource):
 
     Covers the following paths:
         /api/users/{user}/moves/{move}, GET, PUT, DELETE
-        /api/moves/{move}, GET
     """
 
     def put(self, user: str=None, move: str=None) -> Response:
@@ -120,17 +119,12 @@ class MoveItem(Resource):
         Gets the specific move from the general move endpoint or the user specific endpoint
         Allows GET from the following URIs:
             /api/users/{user}/moves/{move}
-            /api/moves/{move}
         """
         if user and move:
             #  Get user id based on the user given by the URI
             user_id = User.query.filter_by(username=user).first().id
             #  Filter the move based on the previous user id and the moves name
             query = Move.query.filter_by(name=move, user_id=user_id).first()
-        elif move and not user:
-            #  Get the first move with the name from the general moves endpoint.
-            #  Could be implemented to return a list of all the moves with the same name.
-            query = Move.query.filter_by(name=move).first()
         else:
             raise MethodNotAllowed
         result = {

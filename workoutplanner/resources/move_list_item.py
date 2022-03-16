@@ -83,7 +83,6 @@ class MoveListItemCollection(Resource):
     def get(self, workout: str, user: str=None) -> tuple[list, int]:
         """
         Allows GET from the following URIs:
-        /api/workouts/{workout}/moves
         /api/users/{user}/workouts/{workout}/moves
         """
         moves = []
@@ -93,10 +92,6 @@ class MoveListItemCollection(Resource):
             plan_id  = WorkoutPlan.query.filter_by(user=user, name=workout).first().id
             if not plan_id:
                 raise NotFound(f"The user {user} or their workout {workout} does not exist")
-        elif workout and not user:
-            plan_id  = WorkoutPlan.query.filter_by(name=workout).first().id
-            if not plan_id:
-                raise NotFound(f"The  workout {workout} does not exist")
         else:
             raise MethodNotAllowed
 
@@ -208,7 +203,6 @@ class MoveListItemItem(Resource):
     def get(self, workout: str, position: int, user: str=None) -> tuple[dict, int]:
         """
         Allows GET from the following URIs:
-        /api/workouts/{workout}/moves/{move_list_item}
         /api/users/{user}/workouts/{workout}/moves/{move_list_item}
             Where move_list_item is the position of the move, i.e. the array index of it.
         """
@@ -217,8 +211,7 @@ class MoveListItemItem(Resource):
             plan_id = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first().id
             query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
         else:
-            plan_id = WorkoutPlan.query.filter_by(name=workout).first().id
-            query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
+            raise MethodNotAllowed
         if not query_result:
             raise NotFound(f"No such move exists")
         result = {

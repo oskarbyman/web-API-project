@@ -26,9 +26,5 @@ ________________________________________________________________________________
 |moves in user's workout|/api/users/{user}/workouts/{workout}/moves                 | X |  X  |   |       |
 |move in user's workout |/api/users/{user}/workouts/{workout}/moves/{move_list_item}| X |     | X |   X   |
 |moves collection       |/api/moves                                                 | X |     |   |       |
-|move item              |/api/moves/{move}                                          | X |     |   |       |
 |workouts collection    |/api/workouts/                                             | X |     |   |       |
-|workout item           |/api/workouts/{workout}                                    | X |     |   |       |
-|moves in a workout     |/api/workouts/{workout}/moves                              | X |     |   |       |
-|a move in a workout    |/api/workouts/{workout}/moves/{move_list_item}             | X |     |   |       |
 ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾

@@ -81,7 +81,6 @@ class WorkoutPlanItem(Resource):
 
     Covers the following URIs:
     /api/users/{user}/workouts/{workout}, GET, PUT, DELETE
-    /api/workouts/{workout}, GET
     """
 
     def put(self, user: str=None, workout: str=None) -> Union[Response, tuple[str, int]]:
@@ -120,13 +119,10 @@ class WorkoutPlanItem(Resource):
 
         Allows GET from the following URIs:
         /api/users/{user}/workouts/{workout}
-        /api/workouts/{workout}
         """
         if user:
             user_id = User.query.filter_by(username=user).first().id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
-        else:
-            query_result = WorkoutPlan.query.filter_by(name=workout).first()
         if not query_result:
             raise NotFound
         result = {
