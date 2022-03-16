@@ -12,7 +12,6 @@ class MoveListItemCollection(Resource):
 
     
     This resource covers the following URI:s,
-    /api/workouts/{workout}/moves, GET
     /api/users/{user}/workouts/{workout}/moves, GET, POST
     """
     def post(self, user: str=None, workout: str=None) -> Response:
@@ -117,7 +116,6 @@ class MoveListItemItem(Resource):
     A wrapped move is a move with repetitions and a position added
 
     Covers the following URI:s,
-    /api/workouts/{workout}/moves/{move_list_item}, GET
     /api/users/{user}/workouts/{workout}/moves/{move_list_item}, GET, PUT, DELETE
     """
 
