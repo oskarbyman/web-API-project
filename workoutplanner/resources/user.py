@@ -14,27 +14,31 @@ class UserCollection(Resource):
     """
 
     def post(self) -> Union[Response, tuple[str, int]]:
+        
+        if request.json == None:
+            raise UnsupportedMediaType
+
         try:
-            if request.json == None:
-                raise UnsupportedMediaType
+            validate(request.json, User.json_schema())
+        except ValidationError as e:
+            raise BadRequest(description=str(e))
 
-            try:
-                validate(request.json, json.loads("schemas/user_schema.json"))
-            except ValidationError as e:
-                raise BadRequest(description=str(e))
-
-            username  = request.json["username"]
-
-            user = User(username=username)
+        username  = request.json["username"]
+        user = User(username=username)
+        
+        try:
             db.session.add(user)
             db.session.commit()
-            return Response(url_for(user), status=200)
         except IntegrityError:
             db.session.rollback()
             raise Conflict(
                 "User already exists",
                 409
             )
+        
+        return Response(status=201, headers={
+            "Location": url_for("api.useritem", user=user)
+        })
 
     def get(self) -> tuple[list, int]:
 
