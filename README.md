@@ -7,10 +7,16 @@
 
 __Remember to include all required documentation and HOWTOs, including how to create and populate the database, how to run and test the API, the url to the entrypoint and instructions on how to setup and run the client__
 
-Instructions for running the server:
+#### Instructions for running the server:
 1. Create database:
     ipython
     In [1]: from workoutplanner import db, create_app
     In [2]: db.create_all(app=create_app())
 2. Run the server:
     python run.py
+
+#### Instructions for testing:
+1. Launch local dev server with above instructions
+2. Change directory to the web-API-project\tests with: `cd tests`
+3. Run tests with: `python api_test.py`
+4. Results are printed to log.txt in the tests folder and the terminal window
