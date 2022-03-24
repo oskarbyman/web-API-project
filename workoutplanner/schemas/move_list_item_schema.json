@@ -10,10 +10,12 @@
         },
         "repetitions": {
             "description": "The amount of repetitions for the move",
+            "minimum": 0,
             "type": "int"
         },
         "position": {
             "description": "The position of the move in the workout",
+            "minimum": 0,
             "type": "int"
         }
     }
