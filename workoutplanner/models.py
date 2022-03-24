@@ -17,19 +17,7 @@ class User(db.Model):
 
     @staticmethod
     def json_schema():
-        #return json.loads(open("schemas/user_schema.json"))
-        return {
-            "description": "A workout move",
-            "type": "object",
-            "required": ["username"],
-            "properties":
-            {
-                "username": {
-                    "description": "An unique username",
-                    "type": "string"
-                }
-            }
-        }
+        return json.load(open("schemas/user_schema.json"))
 
 class WorkoutPlan(db.Model):
     """
@@ -47,7 +35,7 @@ class WorkoutPlan(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.loads("schemas/workout_plan_schema.json")
+        return json.load("schemas/workout_plan_schema.json")
 
 class MoveListItem(db.Model):
     """
@@ -67,7 +55,7 @@ class MoveListItem(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.loads("schemas/move_item_schema.json")
+        return json.load("schemas/move_item_schema.json")
 
 class Move(db.Model):
     """
@@ -87,4 +75,4 @@ class Move(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.loads("schemas/move_schema.json")
+        return json.load("schemas/move_schema.json")
