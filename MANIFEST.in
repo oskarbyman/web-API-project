@@ -1,0 +1,2 @@
+graft workoutplanner/schemas
+global-exclude *.pyc
