@@ -1,8 +1,11 @@
+from enum import unique
 from workoutplanner import db
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.orderinglist import ordering_list
 import json
+import click
+from flask.cli import with_appcontext
 
 class User(db.Model):
     """
@@ -24,14 +27,15 @@ class WorkoutPlan(db.Model):
     Database model for WorkoutPlan. Includes references to the creator of the plan and ordered list of moves in the plan.
     """
 
-    #id = db.Column(db.Integer, primary_key=True)
-    id = db.Column(db.Integer, nullable=False)
-    name = db.Column(db.String(64), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", back_populates="workouts", uselist=False)
     workout_moves = db.relationship("MoveListItem", back_populates="plan", order_by="MoveListItem.position", collection_class=ordering_list("position"))
+
+    __table_args__ = (db.UniqueConstraint("name", "user_id", name="_name_user_constraint"),)
 
     @staticmethod
     def json_schema():
@@ -62,17 +66,58 @@ class Move(db.Model):
     Database model for Move. Includes references to the creator of the move information about the move.
     """
 
-    #id = db.Column(db.Integer, primary_key=True)
-    id = db.Column(db.Integer, nullable=False)
-    #name = db.Column(db.String(64), nullable=False)
-    name = db.Column(db.String(64), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=False)
     description = db.Column(db.String(256), nullable=False)
 
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
     user = db.relationship("User", back_populates="user_moves", uselist=False)
     workout_move = db.relationship("MoveListItem", back_populates="move")
 
+    __table_args__ = (db.UniqueConstraint("name", "user_id", name="_name_user_constraint"),)
+
     @staticmethod
     def json_schema():
         return json.load("schemas/move_schema.json")
+
+# Utility functions to create and populate a database
+@click.command("init-db")
+@with_appcontext
+def initialize_db_command():
+    db.create_all()
+
+@click.command("gen-testdata")
+@with_appcontext
+def populate_db_command():
+    u1 = User(username="ProAthlete35")
+    u2 = User(username="Noob")
+
+    db.session.add(u1)
+    db.session.add(u2)
+    db.session.commit()
+
+    m1 = Move(name="Push Up", description="Push your body up with your hands", user=u1)
+    m2 = Move(name="Opening Fridge", description="Walk to the nearest fridge and open it", user=u1)
+    m3 = Move(name="Plank", description="Use your muscles to keep your body in a straight horizontal line", user=u2)
+
+    db.session.add(m1)
+    db.session.add(m2)
+    db.session.add(m3)
+    db.session.commit()
+
+    p1 = WorkoutPlan(name="Light Exercise", user=u1)
+    p2 = WorkoutPlan(name="Max Suffering", user=u2)
+
+    db.session.add(p1)
+    db.session.add(p2)
+    db.session.commit()
+
+    p1.workout_moves.append(MoveListItem(move=m1))
+    p1.workout_moves.append(MoveListItem(move=m3))
+    p1.workout_moves.append(MoveListItem(move=m1))
+
+    p2.workout_moves.append(MoveListItem(move=m2, repetitions=4))
+
+    db.session.commit()
+    

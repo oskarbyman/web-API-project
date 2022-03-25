@@ -31,4 +31,8 @@ def create_app(test_config=None):
 
     app.register_blueprint(api.api_bp)
 
+    # Register cli commands to create and populate db
+    app.cli.add_command(models.initialize_db_command)
+    app.cli.add_command(models.populate_db_command)
+    print(app.instance_path)
     return app
