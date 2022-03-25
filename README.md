@@ -7,6 +7,23 @@
 
 __Remember to include all required documentation and HOWTOs, including how to create and populate the database, how to run and test the API, the url to the entrypoint and instructions on how to setup and run the client__
 
+#### Instructions for installing the server in a virtual enviroment:
+1. Create a virtual enviroment and navigate to a copy of the project
+2. Install the project:
+    python setup.py install
+3. Set enviromental variable and create a database:
+    Bash:
+        export FLASK_APP=workoutplanner
+    CMD:
+        set FLASK_APP=workoutplanner
+    Powershell:
+        $env:FLASK_APP = "workoutplanner"
+
+    flask init-db
+    flask gen-testdata
+4. Run the server:
+    flask run
+
 #### Instructions for running the server:
 1. Create database:
     ipython
