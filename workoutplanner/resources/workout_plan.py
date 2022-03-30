@@ -19,8 +19,22 @@ class WorkoutPlanCollection(Resource):
 
     def post(self, user: str=None) -> Response:
         """
-        Allows POST to the following URI:     
-        /api/users/{user}/workouts
+        Create a new workout plan
+        ---
+        description: "Allows POST to the following URI:    /api/users/{user}/workouts, NOT from /api/workouts"
+        parameters:
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/workoutitem'        
+        responses:
+            '200':
+                description: URI of the new plan
+                content:
+                    string:
+                        example:
+                            /api/users/Noob/workouts/Light Excercise
+
+            '409':
+                description: Workout plan already exists
         """
         try:
             if not user:
@@ -35,7 +49,7 @@ class WorkoutPlanCollection(Resource):
                     raise BadRequest(description=str(e))
                 
                 name  = request.json["name"]
-                user_id = User.query.filter_by(username=request.json["username"]).first().id
+                user_id = User.query.filter_by(username=user).first().id
 
                 plan = WorkoutPlan(name=name, user_id=user_id)
 
@@ -54,14 +68,28 @@ class WorkoutPlanCollection(Resource):
 
     def get(self, user: str=None) -> list:
         """
-        Allows GET from the following URIs:
-        /api/users/{user}/workouts
-        /api/workouts/
+        Get the list of workout plans
+        ---
+        description: "Allows GET from the following URIs: /api/users/{user}/workouts and /api/workouts/"
+        parameters:
+        - $ref: '#/components/parameters/username'   
+        responses:
+            '200':
+                description: List of workout plans returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/WorkoutItem'
+                        example:
+                        -   name: Light Exercise
+                            creator: Noob
+                        -   name: Max Suffering
+                            creator: ProAthlete35
         """
         plans = []
         #   If user is specified only gets workouts made by the user, else gets them all
         if user:
-            user_id = User.query.filter_by(username=request.json["username"]).first().id
+            user_id = User.query.filter_by(username=user).first().id
             query = WorkoutPlan.query.filter_by(user_id=user_id).all()
         else:
             query = WorkoutPlan.query.all()
@@ -85,15 +113,25 @@ class WorkoutPlanItem(Resource):
 
     def put(self, user: str=None, workout: str=None) -> Union[Response, tuple[str, int]]:
         """
-        Replaces a users workouts name
-        Allows PUT to the following URI:
-        /api/users/{user}/workouts/{workout}
+        Edit/create a workout.
+        ---
+        description: "Allows PUT to the following URI:  /api/users/{user}/workouts/{workout}"
+        parameters:
+        - $ref: '#/components/parameters/user' 
+        - $ref: '#/components/parameters/workout'
+        - $ref: '#/components/parameters/workoutitem'   
+        responses:
+            '200':
+                description: Workout replaced successfully
+                content:
+                    string:
+                        example:
+                            /api/users/Noob/workouts/Light Excercise
         """
         try:
-            if user and workout:
+            if workout and user:
                 if request.json == None:
                     raise UnsupportedMediaType
-
                 try:
                     validate(request.json, WorkoutPlan.json_schema())
                 except ValidationError as e:
@@ -116,13 +154,31 @@ class WorkoutPlanItem(Resource):
     def get(self, workout: str, user: str=None) -> tuple[dict, int]:
         """
         Gets the requested workout
-
-        Allows GET from the following URIs:
-        /api/users/{user}/workouts/{workout}
+        ---
+        description: "Allows GET from the following URIs: /api/users/{user}/workouts/{workout} and /api/workouts/{workout}"
+        parameters:
+        - $ref: '#/components/parameters/username'
+        - $ref: '#/components/parameters/workout'         
+        responses:
+            '200':
+                description: Workout plan returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/WorkoutItem'
+                        example:
+                        -   name: Light Exercise
+                            creator: Noob
         """
+ 
         if user:
             user_id = User.query.filter_by(username=user).first().id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
+        else:
+            query_result = WorkoutPlan.query.filter_by(name=workout).first()
+            if not query_result:
+                raise NotFound
+            user_id = query_result.user_id
         if not query_result:
             raise NotFound
         result = {
@@ -134,19 +190,27 @@ class WorkoutPlanItem(Resource):
     def delete(self, user: str, workout: str) -> Response:
         """
         Allows deletion of a users workout
-        Obviously should require the user to be authenticated, but auth is not implemented yet
-
-        Allows DELETE of the following URI:
-            /api/users/{user}/workouts/{workout}
+        ---
+        description: "Obviously should require the user to be authenticated, but auth is not implemented yet. Allows DELETE of the following URIs: /api/users/{user}/workouts/{workout} and /api/workouts/{workout}"
+        parameters:
+        - $ref: '#/components/parameters/user' 
+        - $ref: '#/components/parameters/workout'         
+        responses:
+            '200':
+                description: Workout plan deleted successfully
         """
-        if user and workout:
-            user_id = User.query.filter_by(username=user).first().id
-            query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
+        if workout:
+            if user:
+                user_id = User.query.filter_by(username=user).first().id
+                query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()          
+            else:
+                query_result = WorkoutPlan.query.filter_by(name=workout).first()
             if not query_result:
                 raise NotFound
-            else:
-                db.session.delete(query_result)
-                db.session.commit()
-                return Response(status=200)
+                return
+
+            db.session.delete(query_result)
+            db.session.commit()
+            return Response(status=200)
         else:
             raise MethodNotAllowed

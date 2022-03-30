@@ -17,6 +17,21 @@ class MoveCollection(Resource):
     """
 
     def post(self, user: str=None) -> Response:
+        """
+        POST a new workout move.
+        ---
+        description: "Allows POST to the following URI:  /api/users/{user}/moves"
+        parameters:
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/moveitem'       
+        responses:
+            '200':
+                description: Move posted successfully
+                content:
+                    string:
+                        example:
+                            /api/users/Noob/moves/Plank
+        """
         try:
             if request.json == None:
                 raise UnsupportedMediaType
@@ -49,10 +64,25 @@ class MoveCollection(Resource):
     def get(self, user: str=None) -> tuple[list, int]:
         """
         Queries all the moves or moves created by a user
-
-        Allows GET from the following URIs:
-        /api/users/{user}/moves
-        /api/moves
+        ---
+        description: "Allows GET from the following URIs: /api/users/{user}/moves, /api/moves"
+        parameters:
+        - $ref: '#/components/parameters/username'
+        - $ref: '#/components/parameters/move'
+        responses:
+            '200':
+                description: Moves returned successfully  
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/MoveItem_response'
+                        example: 
+                        -   name: Plank
+                            creator: Noob
+                            description: Use your muscles to keep your body in a straight horizontal line
+                        -   name: Opening Fridge
+                            creator: ProAthlete35
+                            description: Walk to the nearest fridge and open it
         """
         moves = []
         #  Check if user was present in the URI. 
@@ -83,6 +113,22 @@ class MoveItem(Resource):
     """
 
     def put(self, user: str=None, move: str=None) -> Response:
+        """
+        Edit/create a workout move.
+        ---
+        description: "Allows PUT to the following URI:  /api/users/{user}/moves/{move}"
+        parameters:
+        - $ref: '#/components/parameters/user'    
+        - $ref: '#/components/parameters/move'         
+        - $ref: '#/components/parameters/moveitem' 
+        responses:
+            '200':
+                description: Move replaced successfully
+                content:
+                    string:
+                        example:
+                            /api/users/Noob/moves/Plank
+        """
         try:
             #  Check if PUTting to a specific users move.
             #  Else don't allow PUTting.
@@ -117,8 +163,22 @@ class MoveItem(Resource):
     def get(self, user: str=None, move: str=None) -> tuple[dict, int]:
         """
         Gets the specific move from the general move endpoint or the user specific endpoint
-        Allows GET from the following URIs:
-            /api/users/{user}/moves/{move}
+        ---
+        description: "Allows GET from the following URI: /api/users/{user}/moves/{move}"
+        parameters:
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/move'
+        responses:
+            '200':
+                description: Move returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/MoveItem_response'
+                        example: 
+                        -   name: Plank
+                            creator: Noob
+                            description: Use your muscles to keep your body in a straight horizontal line
         """
         if user and move:
             #  Get user id based on the user given by the URI
@@ -136,8 +196,15 @@ class MoveItem(Resource):
 
     def delete(self, user, move):
         """
-        Allows deletion of a users workout
-        Obviously requires the user to be authenticated, but auth is not implemented yet
+        Allows deletion of a users workout move
+        ---
+        description: Obviously requires the user to be authenticated, but auth is not implemented yet
+        parameters:
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/move'   
+        responses:
+            '200':
+                description: Move deleted successfully
         """
         if user and move:
             #  Get user id based on the user given by the URI
@@ -149,6 +216,8 @@ class MoveItem(Resource):
             else:
                 db.session.delete(query_result)
                 db.session.commit()
+                return Response(status=200)
         else:
             raise MethodNotAllowed
+          
 

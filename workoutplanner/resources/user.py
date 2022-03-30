@@ -14,7 +14,25 @@ class UserCollection(Resource):
     """
 
     def post(self) -> Union[Response, tuple[str, int]]:
-        
+        """
+        Add a new user
+        ---
+        description: Create a new user
+        parameters:
+        - $ref: '#/components/parameters/useritem'
+        responses:
+            '201':
+                description: User added successfully
+                headers:
+                    Location: 
+                        description: URI of the new user
+                        schema:
+                            type: string
+                            example: /api/users/Noob
+
+            '409':
+                description: User already exists
+        """
         if request.json == None:
             raise UnsupportedMediaType
 
@@ -41,7 +59,22 @@ class UserCollection(Resource):
         })
 
     def get(self) -> tuple[list, int]:
-
+        """
+        Get all users
+        ---
+        description: Get all the users in the API
+        responses:
+            '200':
+                description: Users returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/UserItem'
+                        example: 
+                        -   username: Noob
+                        -   username: ProAthlete35
+        """
+        
         users = []
         for user in User.query.all():
             users.append(
@@ -58,6 +91,21 @@ class UserItem(Resource):
     """
 
     def put(self, user) -> Union[Response, tuple[str, int]]:
+        """
+        Add/change a new user
+        ---
+        description: Add/change a user. Can be used to change a username to another
+        parameters:
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/useritem'
+        responses:
+            '200':
+                description: User edited successfully
+                content:
+                    string:
+                        example: 
+                            /api/users/Noob
+        """
         if request.json == None:
             raise UnsupportedMediaType
 
@@ -75,6 +123,20 @@ class UserItem(Resource):
         return Response(url_for(user), status=200)
 
     def get(self, user) -> tuple[str, int]:
+        """
+        Get the user
+        ---
+        description: Get the username of the user
+        parameters:
+        - $ref: '#/components/parameters/user'   
+        responses:
+            '200':
+                description: Username returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/UserItem'
+        """
 
         query_result = User.query.filter_by(username=user).first()
 
@@ -84,7 +146,16 @@ class UserItem(Resource):
         return result, 200
 
     def delete(self, user: str) -> Response:
-
+        """
+        Delete user
+        ---
+        description: Delete the user
+        parameters:
+        - $ref: '#/components/parameters/user'   
+        responses:
+            '200':
+                description: User deleted successfully
+        """
         query_result = User.query.filter_by(username=user).first()
         if not query_result:
             raise NotFound

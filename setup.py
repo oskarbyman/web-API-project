@@ -12,5 +12,7 @@ setup(
         "flask-sqlalchemy",
         "SQLAlchemy",
         "jsonschema",
+        "flasgger",
+        "pyyaml"
     ]
 )

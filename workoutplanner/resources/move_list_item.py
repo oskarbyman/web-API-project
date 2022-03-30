@@ -16,8 +16,22 @@ class MoveListItemCollection(Resource):
     """
     def post(self, user: str=None, workout: str=None) -> Response:
         """
-        Allows POST to the following URI(s):
-        /api/users/{user}/workouts/{workout}/moves
+        POST a new movelist.
+        ---
+        description: "Allows POST to the following URI(s): /api/users/{user}/workouts/{workout}/moves"
+        parameters:
+        - $ref: '#/components/parameters/user'   
+        - $ref: '#/components/parameters/workout'  
+        - $ref: '#/components/parameters/movelistitem'            
+        responses:
+            '200':
+                description: MoveList item posted successfully
+                content:
+                    string:
+                        example:
+                            /api/users/ProAthlete35/workouts/Light Exercise/moves
+            '409':
+                description: Movelist item already exists
         """
         try:
             if request.json == None:
@@ -80,15 +94,42 @@ class MoveListItemCollection(Resource):
             )
 
     def get(self, workout: str, user: str=None) -> tuple[list, int]:
-        """
-        Allows GET from the following URIs:
-        /api/users/{user}/workouts/{workout}/moves
+        """ 
+        Get the list of workout move list items.
+        ---
+        description: "Allows GET from the following URIs: /api/users/{user}/workouts/{workout}/moves"
+        parameters:
+        - $ref: '#/components/parameters/user'     
+        - $ref: '#/components/parameters/workout' 
+        responses:
+            '200':
+                description: List of movelist items returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/definitions/MoveListItem_response'
+                        example:
+                        -   name: Push Up
+                            creator: ProAthlete35
+                            description: Push your body up with your hands
+                            repetitions: 20
+                            position: 0
+                        -   name: Plank
+                            creator: ProAthlete35
+                            description: Push your body up with your hands
+                            repetitions: 60
+                            position: 1
+                            
         """
         moves = []
         if user and workout:
         #  If the query is to a users workout, filter the results based on it
         #  Queries the needed information from the wrapped move based on the move_id in the move list item
-            plan_id  = WorkoutPlan.query.filter_by(user=user, name=workout).first().id
+            user_ = User.query.filter_by(username=user).first()
+            if not user_:
+                raise NotFound(f"The user {user} does not exist")
+            user_id = user_.id
+            plan_id  = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first().id
             if not plan_id:
                 raise NotFound(f"The user {user} or their workout {workout} does not exist")
         else:
@@ -100,7 +141,7 @@ class MoveListItemCollection(Resource):
                 {
                     "name": Move.query.filter_by(id=move.move_id).first().name,
                     "creator": User.query.get(
-                                    Move.query.filter_by(id=move.move_id).first().creator_id
+                                    Move.query.filter_by(id=move.move_id).first().user_id
                                 ).username,
                     "description": Move.query.filter_by(id=move.move_id).first().description,
                     "repetitions": move.repetitions,
@@ -121,9 +162,24 @@ class MoveListItemItem(Resource):
 
     def put(self, user: str=None, workout: str=None, position: int=None) -> Response:
         """
-        Allows PUT the the following URIs:
-        /api/users/{user}/workouts/{workout}/moves/{move_list_item}
-            Where move_list_item is the position of the move, i.e. the array index of it.
+        
+        Edit/create a movelist item.
+        ---
+        description: "Allows PUT the the following URIs: /api/users/{user}/workouts/{workout}/moves/{move_list_item}, where move_list_item is the position of the move, i.e. the array index of it."
+        parameters:
+        - $ref: '#/components/parameters/user'   
+        - $ref: '#/components/parameters/workout'  
+        - $ref: '#/components/parameters/position' 
+        - $ref: '#/components/parameters/movelistitem'
+        responses:
+            '200':
+                description: Movelist item posted successfully
+                content:
+                    string:
+                        example:
+                            /api/users/Noob/workouts/Light Exercise/moves
+            '409':
+                description: Movelist already exists
         """
 
         try:
@@ -200,9 +256,26 @@ class MoveListItemItem(Resource):
 
     def get(self, workout: str, position: int, user: str=None) -> tuple[dict, int]:
         """
-        Allows GET from the following URIs:
-        /api/users/{user}/workouts/{workout}/moves/{move_list_item}
-            Where move_list_item is the position of the move, i.e. the array index of it.
+        Get a workout move list item.
+        ---
+        description: "Allows GET from the following URIs: /api/users/{user}/workouts/{workout}/moves/{move_list_item}, where move_list_item is the position of the move, i.e. the array index of it."
+        parameters:
+        - $ref: '#/components/parameters/user'     
+        - $ref: '#/components/parameters/workout' 
+        - $ref: '#/components/parameters/position'
+        responses:
+            '200':
+                description: A movelist item returned successfully
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#definitions/MoveListItem_response'
+                        example:
+                        -   name: Push Up
+                            creator: ProAthlete35
+                            description: Push your body up with your hands
+                            repetitions: 20
+                            position: 0
         """
         if user:
             user_id = User.query.filter_by(username=user).first().id
@@ -225,11 +298,16 @@ class MoveListItemItem(Resource):
 
     def delete(self, user: str, workout: str, position: int) -> Response:
         """
-        Allows deletion of a users workout
-        Obviously should require the user to be authenticated, but auth is not implemented yet
-        Allows DELETE of the following URIs:
-        /api/users/{user}/workouts/{workout}/moves/{move_list_item}
-            Where move_list_item is the position of the move, i.e. the array index of it.
+        Allows deletion of a users movelist item.
+        ---
+        description: "Allows DELETE of the following URIs: /api/users/{user}/workouts/{workout}/moves/{move_list_item}, here move_list_item is the position of the move, i.e. the array index of it. Obviously should require the user to be authenticated, but auth is not implemented yet."
+        parameters:
+        - $ref: '#/components/parameters/user' 
+        - $ref: '#/components/parameters/workout'    
+        - $ref: '#/components/parameters/position' 
+        responses:
+            '200':
+                description: Move list item deleted successfully
         """
         if user and workout and position:
             user_id = User.query.filter_by(username=user).first().id

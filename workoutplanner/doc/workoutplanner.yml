@@ -1,0 +1,195 @@
+---
+openapi: 3.0.3
+servers:
+- url: /api
+info:
+  title: Workout Planner API
+  version: 0.0.1
+  description: |
+    This is an API example used in the Programmable Web Project course.
+components:
+
+  parameters:
+    user:
+      description: Selected user
+      in: path
+      name: user
+      required: true
+      schema:
+        type: string
+      example:
+    username:
+      description: Selected user (optional)
+      in: path
+      name: username
+      required: false
+      schema:
+        type: string
+    name:
+      description: Selected unique name
+      in: path
+      name: name
+      required: true
+      schema:
+        type: string
+    workout:
+      description: Selected workout
+      in: path
+      name: workout
+      required: true
+      schema:
+        type: string
+    move:
+      description: Selected move
+      in: path
+      name: move
+      required: true
+      schema:
+        type: string
+    position:
+      description: Selected movelist item at the position in list
+      in: path
+      name: position
+      required: true
+      schema:
+        type: integer
+    useritem:
+      description: A new user object
+      in: body
+      name: useritem
+      required: true
+      schema:
+        $ref: '#/definitions/UserItem'
+    movelistitem:
+      description: A new move list object
+      in: body
+      name: movelistitem
+      required: true
+      schema:
+        $ref: '#/definitions/MoveListItem'
+    moveitem:
+      description: A new move object
+      in: body
+      name: moveitem
+      required: true
+      schema:
+        $ref: '#/definitions/MoveItem'
+    workoutitem:
+      description: A new workout object
+      in: body
+      name: workoutitem
+      required: true
+      schema:
+        $ref: '#/definitions/WorkoutItem'
+
+definitions:
+
+  MoveListItem:
+    description: A workout plan movelist item
+    type: object
+    properties:
+      move_name:
+        description: The name of the chosen workout move
+        type: string
+      repetitions:
+        description: The amount of repetitions for the move
+        type: integer
+      position:
+        description: The position of the move in the workout
+        type: integer
+    required: 
+    - move_name
+    example:
+      move_name: Push Up
+      position: 0
+      repetitions: 20
+
+  MoveItem:
+    description: A workout move
+    type: object
+    properties:
+      name:
+        description: The name of the workout move
+        type: string
+      description:
+        description: The description of the move
+        type: string
+    required: 
+    - name
+    - description
+    example:
+      name: Push Up
+      description: Push your body up with your hands
+
+  UserItem:
+    description: An user
+    type: object
+    properties:
+      username:
+        description: A unique username
+        type: string
+    required: 
+    - username
+    example:
+      username: ProAthlete35
+
+  WorkoutItem:
+    description: An object representing a workout plan
+    type: object
+    properties:
+      name:
+        description: The name of the workout plan
+        type: string
+      creator:
+        description: The creator of the workout plan
+        type: string
+    required: 
+    - name
+    - creator
+    example:
+      creator: ProAthlete35
+      name: Light Excercise
+
+  MoveListItem_response:
+    description: An extended workout plan movelist item data
+    type: object
+    properties:
+      name:
+        description: The name of the chosen workout move
+        type: string
+      creator:
+        description: The creator of the move list item
+        type: string
+      description:
+        description: A description of the move
+        type: string
+      repetitions:
+        description: The amount of repetitions for the move
+        type: integer
+      position:
+        description: The position of the move in the workout
+        type: integer
+    example:
+      name: Push Up
+      creator: ProAthlete35
+      description: Push your body up with your hands
+      repetitions: 20
+      position: 0
+
+  MoveItem_response:
+    description: A workout move
+    type: object
+    properties:
+      name:
+        description: The name of the workout move
+        type: string
+      creator:
+        description: The creator of the move item
+        type: string
+      description:
+        description: The description of the move
+        type: string
+    example:
+      name: Push Up
+      creator: ProAthlete35
+      description: Push your body up with your hands

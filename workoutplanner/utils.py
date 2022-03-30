@@ -33,9 +33,9 @@ def populate_db():
         db.session.add(p2)
         db.session.commit()
 
-        p1.workout_moves.append(MoveListItem(move=m1))
-        p1.workout_moves.append(MoveListItem(move=m3))
-        p1.workout_moves.append(MoveListItem(move=m1))
+        p1.workout_moves.append(MoveListItem(move=m1, repetitions=20))
+        p1.workout_moves.append(MoveListItem(move=m3, repetitions=60))
+        p1.workout_moves.append(MoveListItem(move=m1, repetitions=20))
 
         p2.workout_moves.append(MoveListItem(move=m2, repetitions=4))
 
