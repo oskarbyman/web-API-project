@@ -9,12 +9,4 @@
             "type": "string"
         }
     }
-    "@controls": {
-        "up": {
-            "href": "/api/users"
-        },
-        "edit": {
-            "href": "/api/users/{username}"
-        }
-    }
 }

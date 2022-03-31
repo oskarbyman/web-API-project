@@ -43,7 +43,6 @@ class UserCollection(Resource):
 
         username  = request.json["username"]
         user = User(username=username)
-        
         try:
             db.session.add(user)
             db.session.commit()
@@ -54,10 +53,14 @@ class UserCollection(Resource):
                 409
             )
         
-        return Response(status=201, headers={
+        return Response("", status=201, headers={
             "Location": url_for("api.useritem", user=user)
         })
-
+        '''response = Response("", 201)
+        response.headers['Location'] = url_for("api.useritem", user=user)
+        return response
+        '''
+        
     def get(self) -> tuple[list, int]:
         """
         Get all users

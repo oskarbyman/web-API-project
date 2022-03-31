@@ -20,7 +20,7 @@ class User(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.load(open("schemas/user_schema.json"))
+        return json.load(open('workoutplanner/schemas/user_schema.json'))
 
 class WorkoutPlan(db.Model):
     """
@@ -39,7 +39,7 @@ class WorkoutPlan(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.load("schemas/workout_plan_schema.json")
+        return json.load(open('workoutplanner/schemas/workout_plan_schema.json'))
 
 class MoveListItem(db.Model):
     """
@@ -59,7 +59,7 @@ class MoveListItem(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.load("schemas/move_item_schema.json")
+        return json.load(open('workoutplanner/schemas/move_item_schema.json'))
 
 class Move(db.Model):
     """
@@ -79,7 +79,7 @@ class Move(db.Model):
 
     @staticmethod
     def json_schema():
-        return json.load("schemas/move_schema.json")
+        return json.load(open('workoutplanner/schemas/move_schema.json'))
 
 # Utility functions to create and populate a database
 @click.command("init-db")
