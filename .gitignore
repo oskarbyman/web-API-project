@@ -3,4 +3,4 @@ instance/
 log.txt
 build/
 workoutplanner.egg-info/
-dist/workoutplanner-0.1.0-py3.7.egg
+dist/
