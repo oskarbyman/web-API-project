@@ -1,22 +1,26 @@
 {
     "description": "A workout plan movelist item",
     "type": "object",
-    "required": ["move_name"],
+    "required": ["move_name", "move_creator"],
     "properties":
     {
         "move_name":{
             "description":"The name of the chosen workout move",
-            "type": "str"
+            "type": "string"
+        },
+	"move_creator":{
+            "description":"The creator of the chosen workout move",
+            "type": "string"
         },
         "repetitions": {
             "description": "The amount of repetitions for the move",
             "minimum": 0,
-            "type": "int"
+            "type": "integer"
         },
         "position": {
             "description": "The position of the move in the workout",
             "minimum": 0,
-            "type": "int"
+            "type": "integer"
         }
     }
 }

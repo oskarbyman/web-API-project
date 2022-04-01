@@ -35,7 +35,6 @@ class UserCollection(Resource):
         """
         if request.json == None:
             raise UnsupportedMediaType
-
         try:
             validate(request.json, User.json_schema())
         except ValidationError as e:
@@ -52,14 +51,11 @@ class UserCollection(Resource):
                 "User already exists",
                 409
             )
-        
-        return Response("", status=201, headers={
+            return Response("User already exists", 409)
+
+        return Response(status=201, headers={
             "Location": url_for("api.useritem", user=user)
         })
-        '''response = Response("", 201)
-        response.headers['Location'] = url_for("api.useritem", user=user)
-        return response
-        '''
         
     def get(self) -> tuple[list, int]:
         """

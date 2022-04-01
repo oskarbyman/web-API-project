@@ -91,6 +91,9 @@ definitions:
       move_name:
         description: The name of the chosen workout move
         type: string
+      move_creator:
+        description: The creator of the move used
+        type: string
       repetitions:
         description: The amount of repetitions for the move
         type: integer
@@ -99,8 +102,10 @@ definitions:
         type: integer
     required: 
     - move_name
+    - move_creator
     example:
       move_name: Push Up
+      move_creator: ProAthlete35
       position: 0
       repetitions: 20
 
@@ -114,11 +119,16 @@ definitions:
       description:
         description: The description of the move
         type: string
+      creator:
+        description: The creator of the move
+        type: string
     required: 
     - name
     - description
+    - creator
     example:
       name: Push Up
+      creator: ProAthlete35
       description: Push your body up with your hands
 
   UserItem:
@@ -140,56 +150,7 @@ definitions:
       name:
         description: The name of the workout plan
         type: string
-      creator:
-        description: The creator of the workout plan
-        type: string
     required: 
     - name
-    - creator
     example:
-      creator: ProAthlete35
       name: Light Excercise
-
-  MoveListItem_response:
-    description: An extended workout plan movelist item data
-    type: object
-    properties:
-      name:
-        description: The name of the chosen workout move
-        type: string
-      creator:
-        description: The creator of the move list item
-        type: string
-      description:
-        description: A description of the move
-        type: string
-      repetitions:
-        description: The amount of repetitions for the move
-        type: integer
-      position:
-        description: The position of the move in the workout
-        type: integer
-    example:
-      name: Push Up
-      creator: ProAthlete35
-      description: Push your body up with your hands
-      repetitions: 20
-      position: 0
-
-  MoveItem_response:
-    description: A workout move
-    type: object
-    properties:
-      name:
-        description: The name of the workout move
-        type: string
-      creator:
-        description: The creator of the move item
-        type: string
-      description:
-        description: The description of the move
-        type: string
-    example:
-      name: Push Up
-      creator: ProAthlete35
-      description: Push your body up with your hands

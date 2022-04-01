@@ -57,9 +57,10 @@ class MoveListItem(db.Model):
     move = db.relationship("Move", back_populates="workout_move", uselist=False)
     plan = db.relationship("WorkoutPlan", back_populates="workout_moves", uselist=False)
 
+
     @staticmethod
     def json_schema():
-        return json.load(open('workoutplanner/schemas/move_item_schema.json'))
+        return json.load(open('workoutplanner/schemas/move_list_item_schema.json'))
 
 class Move(db.Model):
     """

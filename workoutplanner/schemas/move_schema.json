@@ -1,7 +1,7 @@
 {
     "description": "A workout move",
     "type": "object",
-    "required": ["name", "description"],
+    "required": ["name", "description", "creator"],
     "properties":
     {
         "name": {
@@ -10,6 +10,10 @@
         },
         "description": {
             "description": "The description of the move",
+            "type": "string"
+        },
+	"creator": {
+            "description": "The creator of the move",
             "type": "string"
         }
     }

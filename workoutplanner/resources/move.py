@@ -27,10 +27,12 @@ class MoveCollection(Resource):
         responses:
             '200':
                 description: Move posted successfully
-                content:
-                    string:
-                        example:
-                            /api/users/Noob/moves/Plank
+                headers:
+                    Location: 
+                        description: URI of the new move
+                        schema:
+                            type: string
+                            example: /api/users/Noob/moves/Plank
         """
         try:
             if request.json == None:
@@ -53,7 +55,11 @@ class MoveCollection(Resource):
             #  Add the move in to the database and commit all the changes
             db.session.add(move)
             db.session.commit()
-            return Response(url_for(move), status=200)
+            #return Response(url_for(move), status=200)
+            return Response(status=201, headers={
+                "Location": url_for("api.moveitem", user=user, move=name)
+            })
+            
         except KeyError:
             db.session.rollback()
             raise BadRequest
@@ -75,7 +81,7 @@ class MoveCollection(Resource):
                 content:
                     application/json:
                         schema:
-                            $ref: '#definitions/MoveItem_response'
+                            $ref: '#definitions/MoveItem'
                         example: 
                         -   name: Plank
                             creator: Noob
@@ -174,7 +180,7 @@ class MoveItem(Resource):
                 content:
                     application/json:
                         schema:
-                            $ref: '#definitions/MoveItem_response'
+                            $ref: '#definitions/MoveItem'
                         example: 
                         -   name: Plank
                             creator: Noob

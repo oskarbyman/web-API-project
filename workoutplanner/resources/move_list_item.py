@@ -22,14 +22,16 @@ class MoveListItemCollection(Resource):
         parameters:
         - $ref: '#/components/parameters/user'   
         - $ref: '#/components/parameters/workout'  
-        - $ref: '#/components/parameters/movelistitem'            
+        - $ref: '#/components/parameters/movelistitem'   
         responses:
             '200':
                 description: MoveList item posted successfully
-                content:
-                    string:
-                        example:
-                            /api/users/ProAthlete35/workouts/Light Exercise/moves
+                headers:
+                    Location: 
+                        description: URI of the new movelist
+                        schema:
+                            type: string
+                            example: /api/users/ProAthlete35/workouts/Light Exercise/moves
             '409':
                 description: Movelist item already exists
         """
@@ -43,9 +45,25 @@ class MoveListItemCollection(Resource):
                 except ValidationError as e:
                     raise BadRequest(description=str(e))
                 #  Get link ids to link the correct move and plan to the wrapper
-                plan_id  = WorkoutPlan.query.filter_by(user=user, name=workout).first().id
                 creator_id = User.query.filter_by(username=user).first().id
-                move_id = Move.query.filter_by(name=request.json["move_name"], user_id=creator_id).first().id
+                if not creator_id:
+                    raise NotFound(f"No such user as {user} found")
+                    
+                plan_id = WorkoutPlan.query.filter_by(user_id=creator_id, name=workout).first().id    
+                if not plan_id:
+                    raise NotFound(f"No such workout as {plan_id} found")
+                   
+                move_creator = User.query.filter_by(username=request.json["move_creator"]).first()
+                if not move_creator:
+                    raise NotFound(f"No such user as {move_creator} found")
+                   
+                move_id = Move.query.filter_by(name=request.json["move_name"], user_id=move_creator.id).first().id
+                if not move_id:
+                    move_name = request.json["move_name"]
+                    raise NotFound(f"No such move as {move_name} found")
+
+                
+                
                 #  Checks if the optional repetitions is present in the request
                 if "repetitions" in request.json:
                     repetitions = request.json["repetitions"]
@@ -53,21 +71,25 @@ class MoveListItemCollection(Resource):
                     repetitions = None
                 #  Checks if the optional position is present in the request
                 if "position" in request.json:
+                
+                    position = request.json["position"]
                     #  Get all current moves in workout plan
-                    current_moves = MoveListItem.query.filter(plan_id == plan_id).all()
+                    print(plan_id)
+                    current_moves = MoveListItem.query.filter((plan_id == plan_id) & (position >= position)).all()
+                    print(current_moves)
                     #  Figure out the last position
-                    last_position = max([int(c_move.position) for c_move in current_moves].sort())
+                    last_position = max([int(c_move.position) for c_move in current_moves])
+                    print("Last position: " + str(last_position))
                     #  If the requested position is larger than the currently last position
                     #  Set it to the length of the movelist array, else set the requested value
-                    if request.json["position"] > last_position:
+                    if position > last_position:
                         position = len(MoveListItem.query.filter_by(plan_id=plan_id).all())
-                    else:
-                        position = request.json["position"]
                     #  Queries current positions of the moves in the same plan 
                     #  with a position equal or larger than the on in the request.
                     #  Returns an empty list if the position does not exist
                     #  Increments the current positions with one to enable inserting the new position
-                    current_moves = MoveListItem.query.filter(plan_id == plan_id, position >= position).all()
+                    print("Position: " + str(position))
+                    
                     for current_move in current_moves:
                         current_move.position += 1
                 else:
@@ -82,7 +104,11 @@ class MoveListItemCollection(Resource):
                 raise MethodNotAllowed
             db.session.add(move)
             db.session.commit()
-            return Response(url_for(move), status=200)
+            #return Response(url_for(move), status=200)
+            return Response(status=201, headers={
+                "Location": url_for("api.movelistitemitem", user=user, workout=workout, position=position)
+            })
+            
         except KeyError:
             db.session.rollback()
             raise BadRequest
@@ -111,12 +137,10 @@ class MoveListItemCollection(Resource):
                         example:
                         -   name: Push Up
                             creator: ProAthlete35
-                            description: Push your body up with your hands
                             repetitions: 20
                             position: 0
                         -   name: Plank
                             creator: ProAthlete35
-                            description: Push your body up with your hands
                             repetitions: 60
                             position: 1
                             
@@ -135,7 +159,9 @@ class MoveListItemCollection(Resource):
         else:
             raise MethodNotAllowed
 
-        query = MoveListItem.query.filter_by(plan_id=plan_id).all()
+        #query = MoveListItem.query.filter_by(plan_id=plan_id).all()
+        query = MoveListItem.query.filter(plan_id==plan_id).all()
+        print(query)
         for move in query:
             moves.append(
                 {
@@ -143,7 +169,6 @@ class MoveListItemCollection(Resource):
                     "creator": User.query.get(
                                     Move.query.filter_by(id=move.move_id).first().user_id
                                 ).username,
-                    "description": Move.query.filter_by(id=move.move_id).first().description,
                     "repetitions": move.repetitions,
                     "position": move.position
                 }
@@ -190,37 +215,42 @@ class MoveListItemItem(Resource):
             if request.json == None:
                 raise UnsupportedMediaType
             #  If the target URI is a move in a users workout uses the move list item wrapper model
-            if workout and user and position:
+            if (workout!=None) and (user!=None) and (position!=None):
                 #  Id:s
                 user_id = User.query.filter_by(username=user).first().id
                 if not user_id:
                     raise NotFound(f"No such user as {user} found")
 
-                plan_id = WorkoutPlan.query.filter_by(name=workout, user=user_id).first().id
+                plan_id = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first().id
                 if not plan_id:
                     raise NotFound(f"No such workout as {workout} found")
 
-                move_id = Move.query.filter_by(name=request.json["move_name"]).first().id
+                move_id = Move.query.filter_by(name=request.json["move_name"], user=request.json["move_creator"]).first().id
                 if not move_id:
                     move_name = request.json["move_name"]
                     raise NotFound(f"No such move as {move_name} found")
 
+                
+
                 if "position" in request.json:
                     #  Get all current moves in workout plan
-                    current_moves = MoveListItem.query.filter(plan_id == plan_id).all()
+                    current_moves = MoveListItem.query.filter_by(plan_id=plan_id).all()
                     #  Figure out the last position
-                    last_position = max([int(c_move.position) for c_move in current_moves].sort())
+                    last_position = max([int(c_move.position) for c_move in current_moves])
+
                     #  If the requested position is larger than the currently last position
                     #  Set it to the length of the movelist array, else set the requested value
                     if request.json["position"] > last_position:
                         new_position = len(MoveListItem.query.filter_by(plan_id=plan_id).all())
                     else:
                         new_position = request.json["position"]
+                        print("New pos: " + str(new_position))
                     #  Queries current positions of the moves in the same plan 
                     #  with a position equal or larger than the on in the request.
                     #  Returns an empty list if the position does not exist
                     #  Increments the current positions with one to enable inserting the new position
-                    current_moves = MoveListItem.query.filter(plan_id == plan_id, position >= new_position).all()
+                    current_moves = MoveListItem.query.filter(plan_id==plan_id, position > new_position).all()
+                    print(current_moves)
                     for current_move in current_moves:
                         current_move.position += 1
                 else:
@@ -232,16 +262,24 @@ class MoveListItemItem(Resource):
                     new_repetitions = request.json["repetitions"]
                 else:
                     new_repetitions = None
+                    
                 #  Get the current Move list item object
-                move_list_item = MoveListItem.query.filter_by(position=position, plan_id=plan_id).first()
+                print(new_position)
+                print(position)
+                print(MoveListItem.query.filter_by(plan_id=plan_id).all())
+                print(MoveListItem.query.filter_by().all())
+                move_list_item = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
                 if not move_list_item:
                     db.session.rollback()
                     raise NotFound(f"No move at position {position}")
-
+                
+                print(new_position)
+                print(move_list_item.position)
                 #  Change the values of the requested move list object
                 move_list_item.move_id = move_id
                 move_list_item.position = new_position
                 move_list_item.repetitions = new_repetitions
+
             else:
                 raise MethodNotAllowed
         except KeyError as e:
@@ -252,7 +290,10 @@ class MoveListItemItem(Resource):
             raise Conflict("Move already exists")
         else:
             db.session.commit()
-            return Response(url_for(move_list_item), status=200)
+            #return Response(url_for(move_list_item), status=200)
+            return Response(status=201, headers={
+                "Location": url_for("api.movelistitemitem", user=user, workout=workout, position=new_position)
+            })
 
     def get(self, workout: str, position: int, user: str=None) -> tuple[dict, int]:
         """
@@ -288,9 +329,8 @@ class MoveListItemItem(Resource):
         result = {
             "name": Move.query.filter_by(id=query_result.move_id).first().name,
             "creator": User.query.get(
-                            Move.query.filter_by(id=query_result.move_id).first().creator_id
+                            Move.query.filter_by(id=query_result.move_id).first().user_id
                         ).username,
-            "description": Move.query.filter_by(id=query_result.move_id).first().description,
             "repetitions": query_result.repetitions,
             "position": query_result.position
         }

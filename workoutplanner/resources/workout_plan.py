@@ -1,6 +1,6 @@
 from os import stat
-from flask import Response, request, url_for
-from flask_restful import Resource
+from flask import Response, request
+from flask_restful import Resource, url_for
 from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
 from typing import Union
@@ -28,11 +28,12 @@ class WorkoutPlanCollection(Resource):
         responses:
             '200':
                 description: URI of the new plan
-                content:
-                    string:
-                        example:
-                            /api/users/Noob/workouts/Light Excercise
-
+                headers:
+                    Location: 
+                        description: URI of the new workout
+                        schema:
+                            type: string
+                            example: /api/users/Noob/workouts/Light Excercise
             '409':
                 description: Workout plan already exists
         """
@@ -55,7 +56,10 @@ class WorkoutPlanCollection(Resource):
 
                 db.session.add(plan)
                 db.session.commit()
-                return Response(url_for(plan), status=200)
+                #return Response(url_for(plan), status=200)
+                return Response(status=201, headers={
+                    "Location": url_for("api.workoutplanitem", user=user, workout=name)
+                })
         except KeyError:
             db.session.rollback()
             raise BadRequest
