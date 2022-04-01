@@ -120,7 +120,7 @@ class MoveItem(Resource):
 
     def put(self, user: str=None, move: str=None) -> Response:
         """
-        Edit/create a workout move.
+        Edit a workout move.
         ---
         description: "Allows PUT to the following URI:  /api/users/{user}/moves/{move}"
         parameters:

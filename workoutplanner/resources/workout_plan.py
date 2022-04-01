@@ -117,7 +117,7 @@ class WorkoutPlanItem(Resource):
 
     def put(self, user: str=None, workout: str=None) -> Union[Response, tuple[str, int]]:
         """
-        Edit/create a workout.
+        Edit a workout.
         ---
         description: "Allows PUT to the following URI:  /api/users/{user}/workouts/{workout}"
         parameters:

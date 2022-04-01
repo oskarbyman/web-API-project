@@ -91,7 +91,7 @@ class UserItem(Resource):
 
     def put(self, user) -> Union[Response, tuple[str, int]]:
         """
-        Add/change a new user
+        Edit an user
         ---
         description: Add/change a user. Can be used to change a username to another
         parameters:
