@@ -107,19 +107,28 @@ class MoveCollection(Resource):
         #  If so, query only the moves by that user.
         #  Else query all moves in the database.
         if user:
-            user_id = User.query.filter_by(username=user).first().id
+            user_obj = User.query.filter_by(username=user).first()
+            user_id = user_obj.id
             query = Move.query.filter_by(user_id=user_id).all()
         else:
             query = Move.query.all()
+        
+        body = MoveCollectionBuilder(items=[])
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=MOVE_COLLECTION_PROFILE_URL)
+        if user:
+            body.add_control("up", href=user_obj.get_url())
+            body.add_control("collection", href=url_for("api.movecollection"))
+            body.add_control_add_move(user_obj)
+        
         for move in query:
-            moves.append(
-                {
-                    "name": move.name,
-                    "creator": User.query.get(move.user_id).username,
-                    "description": move.description
-                }
-            )
-        return moves, 200
+            item = MoveBuilder(move.serialize(short_form=True))
+            item.add_control("self", move.get_url())
+            body["items"].append(item)
+        
+        return Response(json.dumps(body), 200, mimetype=MASON)
+        
 
 class MoveItem(Resource):
     """
@@ -244,6 +253,16 @@ class MoveItem(Resource):
                 return Response(status=200)
         else:
             raise MethodNotAllowed
+          
+class MoveCollectionBuilder(MasonBuilder):
+
+    def add_control_add_move(self, user):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-move",
+            title="Add a move",
+            href=user.get_url() + "moves/",
+            schema=Move.json_schema()
+        )
           
 
 class MoveBuilder(MasonBuilder):

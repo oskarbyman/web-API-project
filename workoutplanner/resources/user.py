@@ -86,14 +86,21 @@ class UserCollection(Resource):
                         -   username: ProAthlete35
         """
 
-        users = []
+            
+        body = UserCollectionBuilder(items=[])
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=USER_COLLECTION_PROFILE_URL)
+        body.add_control("up", href="/api/")
+        body.add_control_add_user()
+        
         for user in User.query.all():
-            users.append(
-                {
-                    "username": user.username
-                }
-            )
-        return users, 200
+            item = UserBuilder(user.serialize())
+            item.add_control("self", user.get_url())
+            body["items"].append(item)
+        
+        return Response(json.dumps(body), 200, mimetype=MASON)
+
 
 class UserItem(Resource):
     """
@@ -190,6 +197,15 @@ class UserItem(Resource):
             db.session.commit()
             return Response(status=200)
 
+class UserCollectionBuilder(MasonBuilder):
+
+    def add_control_add_user(self):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-user",
+            title="Add an user",
+            href="/api/users/",
+            schema=User.json_schema()
+        )
 
 
 

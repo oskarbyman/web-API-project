@@ -163,11 +163,12 @@ class MoveListItemCollection(Resource):
         if user and workout:
         #  If the query is to a users workout, filter the results based on it
         #  Queries the needed information from the wrapped move based on the move_id in the move list item
-            user_ = User.query.filter_by(username=user).first()
-            if not user_:
+            user_obj = User.query.filter_by(username=user).first()
+            if not user_obj:
                 raise NotFound(f"The user {user} does not exist")
-            user_id = user_.id
-            plan_id  = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first().id
+            user_id = user_obj.id
+            plan_obj = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first()
+            plan_id  = plan_obj.id
             if not plan_id:
                 raise NotFound(f"The user {user} or their workout {workout} does not exist")
         else:
@@ -175,18 +176,21 @@ class MoveListItemCollection(Resource):
 
         query = MoveListItem.query.filter_by(plan_id=plan_id).all()
         query.sort(key=lambda x: x.position)
-        for move in query:
-            moves.append(
-                {
-                    "name": Move.query.filter_by(id=move.move_id).first().name,
-                    "creator": User.query.get(
-                                    Move.query.filter_by(id=move.move_id).first().user_id
-                                ).username,
-                    "repetitions": move.repetitions,
-                    "position": move.position
-                }
-            )
-        return moves, 200
+        
+        body = MoveListItemCollectionBuilder(items=[])
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=MOVELISTITEM_COLLECTION_PROFILE_URL)
+        if user and workout:
+            body.add_control("up", href=plan_obj.get_url())
+            body.add_control_add_move_list_item(plan_obj)
+        
+        for movelistitem in query:
+            item = MoveListItemBuilder(movelistitem.serialize(short_form=True))
+            item.add_control("self", movelistitem.get_url())
+            body["items"].append(item)
+        
+        return Response(json.dumps(body), 200, mimetype=MASON)
 
 
 class MoveListItemItem(Resource):
@@ -392,6 +396,17 @@ class MoveListItemItem(Resource):
                 return Response(status=200)
         else:
             raise MethodNotAllowed
+
+
+class MoveListItemCollectionBuilder(MasonBuilder):
+
+    def add_control_add_move_list_item(self, plan):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-movelistitem",
+            title="Add a move list item to the workout",
+            href=plan.get_url() + "moves/",
+            schema=MoveListItem.json_schema()
+        )
 
 
 class MoveListItemBuilder(MasonBuilder):

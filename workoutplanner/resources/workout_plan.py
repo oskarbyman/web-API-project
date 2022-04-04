@@ -105,18 +105,27 @@ class WorkoutPlanCollection(Resource):
         plans = []
         #   If user is specified only gets workouts made by the user, else gets them all
         if user:
-            user_id = User.query.filter_by(username=user).first().id
+            user_obj = User.query.filter_by(username=user).first()
+            user_id = user_obj.id
             query = WorkoutPlan.query.filter_by(user_id=user_id).all()
         else:
             query = WorkoutPlan.query.all()
-        for plan in query:
-            plans.append(
-                {
-                    "name": plan.name,
-                    "creator": User.query.get(plan.user_id).username
-                }
-            )
-        return plans, 200
+        
+        body = WorkoutPlanCollectionBuilder(items=[])
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=WORKOUT_COLLECTION_PROFILE_URL)
+        if user:
+            body.add_control("up", href=user_obj.get_url())
+            body.add_control("collection", href=url_for("api.workoutplancollection"))
+            body.add_control_add_workout(user_obj)
+        
+        for workout in query:
+            item = WorkoutPlanBuilder(workout.serialize(short_form=True))
+            item.add_control("self", workout.get_url())
+            body["items"].append(item)
+        
+        return Response(json.dumps(body), 200, mimetype=MASON)
 
 class WorkoutPlanItem(Resource):
     """
@@ -242,6 +251,18 @@ class WorkoutPlanItem(Resource):
             return Response(status=200)
         else:
             raise MethodNotAllowed
+
+
+class WorkoutPlanCollectionBuilder(MasonBuilder):
+
+    def add_control_add_workout(self, user):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-workout",
+            title="Add a workout",
+            href=user.get_url() + "workouts/",
+            schema=WorkoutPlan.json_schema()
+        )
+
 
 class WorkoutPlanBuilder(MasonBuilder):
 

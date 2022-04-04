@@ -97,6 +97,22 @@ def make_api(app):
     def profile_movelist():
         return "Absolute nonsense"        
     
+    @app.route(USER_COLLECTION_PROFILE_URL)
+    def profile_user_collection():
+        return "Absolute nonsense"
+        
+    @app.route(MOVE_COLLECTION_PROFILE_URL)
+    def profile_move_collection():
+        return "Absolute nonsense"
+        
+    @app.route(WORKOUT_COLLECTION_PROFILE_URL)
+    def profile_workout_collection():
+        return "Absolute nonsense"
+
+    @app.route(MOVELISTITEM_COLLECTION_PROFILE_URL)
+    def profile_movelist_collection():
+        return "Absolute nonsense"      
+    
 
     @app.route(ERROR_PROFILE)
     def profile_error():

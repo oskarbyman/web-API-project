@@ -53,7 +53,11 @@ class WorkoutPlan(db.Model):
 
     __table_args__ = (db.UniqueConstraint("name", "user_id", name="_name_user_constraint"),)
 
-    def serialize(self):
+    def serialize(self, short_form=False):
+        if short_form:
+            return {
+                "name": self.name
+            }
         return {
             "name": self.name,
             "user": self.user.username
@@ -89,7 +93,12 @@ class MoveListItem(db.Model):
     move = db.relationship("Move", back_populates="workout_move", uselist=False)
     plan = db.relationship("WorkoutPlan", back_populates="workout_moves", uselist=False)
 
-    def serialize(self):
+    def serialize(self, short_form=False):
+        if short_form:
+            return {
+                "position": self.position,
+                "move": self.move.name
+            }
         return {
             "position": self.position,
             "repetitions": self.repetitions,
@@ -129,7 +138,11 @@ class Move(db.Model):
 
     __table_args__ = (db.UniqueConstraint("name", "user_id", name="_name_user_constraint"),)
 
-    def serialize(self):
+    def serialize(self, short_form=False):
+        if short_form:
+            return {
+                "name": self.name,
+            }
         return {
             "name": self.name,
             "description": self.description,
