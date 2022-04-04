@@ -4,6 +4,18 @@ from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed
 from workoutplanner.models import *
 from workoutplanner import db
+from workoutplanner.utils import MasonBuilder
+from werkzeug.routing import BaseConverter
+from workoutplanner.links import *
+
+class MoveListItemConverter(BaseConverter):
+    def to_python(self, user):
+        db_user = User.query.filter_by(username=user).first()
+        if db_user is None:
+            raise NotFound
+        return db_user
+    def to_url(self, db_user):
+        return db_user.username
 
 class MoveListItemCollection(Resource):
     """
@@ -338,14 +350,18 @@ class MoveListItemItem(Resource):
             raise MethodNotAllowed
         if not query_result:
             raise NotFound(f"No such move exists")
-        result = {
-            "name": Move.query.filter_by(id=query_result.move_id).first().name,
-            "creator": User.query.get(
-                            Move.query.filter_by(id=query_result.move_id).first().user_id
-                        ).username,
-            "repetitions": query_result.repetitions,
-            "position": query_result.position
-        }
+        
+        body = MoveListItemBuilder(query_result.serialize())
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=MOVELISTITEM_PROFILE_URL)
+        body.add_control("up", query_result.get_collection_url())
+        body.add_control_get_workout_plan(query_result)
+        body.add_control_get_move(query_result)
+        body.add_control_edit_movelist_item(query_result)
+        body.add_control_delete_movelist_item(query_result)
+        return Response(json.dumps(body), 200, mimetype=MASON)
+        
         return result, 200
 
     def delete(self, user: str, workout: str, position: int) -> Response:
@@ -376,3 +392,37 @@ class MoveListItemItem(Resource):
                 return Response(status=200)
         else:
             raise MethodNotAllowed
+
+
+class MoveListItemBuilder(MasonBuilder):
+
+    def add_control_get_move(self, obj):
+        self.add_control(
+            ctrl_name="workoutplanner:move",
+            href= obj.move.get_url(),
+            method="GET",
+            title="Get the move of the movelist item"
+        )
+        
+    def add_control_get_workout_plan(self, obj):
+        self.add_control(
+            ctrl_name="workoutplanner:workout",
+            href= obj.plan.get_url(),
+            method="GET",
+            title="Get the workout the movelist item is a part of"
+        )
+
+    def add_control_delete_movelist_item(self, obj):
+        self.add_control_delete(
+            ctrl_name="workoutplanner:delete",
+            title="Delete this move list item",
+            href=obj.get_url()
+        )
+    
+    def add_control_edit_movelist_item(self, obj):
+        self.add_control_put(
+            ctrl_name="edit",
+            title="Edit this move list item",
+            href=obj.get_url(),
+            schema=MoveListItem.json_schema()
+        )

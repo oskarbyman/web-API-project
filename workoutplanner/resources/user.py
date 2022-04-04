@@ -1,11 +1,23 @@
 import json
 from flask import Response, request, url_for
-from flask_restful import Resource
+from flask_restful import Resource, Api
 from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
 from typing import Union
 from workoutplanner.models import *
 from workoutplanner import db
+from workoutplanner.utils import MasonBuilder
+from werkzeug.routing import BaseConverter
+from workoutplanner.links import *
+
+class UserConverter(BaseConverter):
+    def to_python(self, user):
+        db_user = User.query.filter_by(username=user).first()
+        if db_user is None:
+            raise NotFound
+        return db_user
+    def to_url(self, db_user):
+        return db_user.username
 
 class UserCollection(Resource):
     """
@@ -73,7 +85,7 @@ class UserCollection(Resource):
                         -   username: Noob
                         -   username: ProAthlete35
         """
-        
+
         users = []
         for user in User.query.all():
             users.append(
@@ -140,13 +152,24 @@ class UserItem(Resource):
                         schema:
                             $ref: '#definitions/UserItem'
         """
+        user_obj = User.query.filter_by(username=user).first()
 
-        query_result = User.query.filter_by(username=user).first()
-
-        if not query_result:
+        if not user_obj:
             raise NotFound
-        result = query_result.username
-        return result, 201
+        result = user_obj.username
+        
+        body = UserBuilder(user_obj.serialize())
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=USER_PROFILE_URL)
+        body.add_control("collection", url_for("api.usercollection"))# href=api.url_for(UserCollection))
+        body.add_control_get_all_moves(user_obj)
+        body.add_control_get_all_workouts(user_obj)
+        body.add_control_add_move(user_obj)
+        body.add_control_add_workout(user_obj)
+        body.add_control_edit_user(user_obj)
+        body.add_control_delete_user(user_obj)
+        return Response(json.dumps(body), 200, mimetype=MASON)
 
     def delete(self, user: str) -> Response:
         """
@@ -166,3 +189,57 @@ class UserItem(Resource):
             db.session.delete(query_result)
             db.session.commit()
             return Response(status=200)
+
+
+
+
+class UserBuilder(MasonBuilder):
+
+    def add_control_get_all_moves(self, user):
+        self.add_control(
+            ctrl_name="workoutplanner:moves-by",
+            href=user.get_url() + "moves/",
+            method="GET",
+            title="Get all moves of this user"
+        )
+        
+    def add_control_get_all_workouts(self, user):
+        self.add_control(
+            ctrl_name="workoutplanner:workouts-by",
+            href=user.get_url() + "workouts/",
+            method="GET",
+            title="Get all workouts of this user"
+        )
+
+    def add_control_delete_user(self, user):
+        self.add_control_delete(
+            ctrl_name="workoutplanner:delete",
+            title="Delete this user",
+            href=user.get_url()
+        )
+    
+    def add_control_add_move(self, user):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-move",
+            title="Add a move for this user",
+            href=user.get_url() + "moves/",
+            schema=Move.json_schema()
+        )
+        
+    def add_control_add_workout(self, user):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-workout",
+            title="Add a workout for this user",
+            href=user.get_url() + "workouts/",
+            schema=WorkoutPlan.json_schema()
+        )
+    
+    def add_control_edit_user(self, user):
+        from flask import current_app
+    
+        self.add_control_put(
+            ctrl_name="edit",
+            title="Edit this user",
+            href=user.get_url(),
+            schema=User.json_schema()
+        )

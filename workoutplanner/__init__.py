@@ -3,7 +3,10 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flasgger import Swagger, swag_from
 
+
 db = SQLAlchemy()
+
+from workoutplanner.links import *
 
 # Based on http://flask.pocoo.org/docs/1.0/tutorial/factory/#the-application-factory
 # Modified to use Flask SQLAlchemy
@@ -33,11 +36,12 @@ def create_app(test_config=None):
         pass
     
     db.init_app(app)
-
-    from . import api
+    
+    from . import api as api_
     from . import models
+    api = api_.make_api(app)
 
-    app.register_blueprint(api.api_bp)
+    app.register_blueprint(api_.api_bp)
 
     # Register cli commands to create and populate db
     app.cli.add_command(models.initialize_db_command)

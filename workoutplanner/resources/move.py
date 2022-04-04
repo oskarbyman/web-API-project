@@ -5,6 +5,18 @@ from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed
 from workoutplanner.models import *
 from workoutplanner import db
+from workoutplanner.utils import MasonBuilder
+from werkzeug.routing import BaseConverter
+from workoutplanner.links import *
+
+class MoveConverter(BaseConverter):
+    def to_python(self, user):
+        db_user = User.query.filter_by(username=user).first()
+        if db_user is None:
+            raise NotFound
+        return db_user
+    def to_url(self, db_user):
+        return db_user.username
 
 class MoveCollection(Resource):
     """
@@ -196,12 +208,16 @@ class MoveItem(Resource):
             query = Move.query.filter_by(name=move, user_id=user_id).first()
         else:
             raise MethodNotAllowed
-        result = {
-                    "name": query.name,
-                    "creator": User.query.get(query.user_id).username,
-                    "description": query.description
-                }
-        return result, 200
+     
+        body = MoveBuilder(query.serialize())
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=MOVE_PROFILE_URL)
+        body.add_control("collection", url_for("api.movecollection"))
+        body.add_control("up", query.get_collection_url())
+        body.add_control_edit_move(query)
+        body.add_control_delete_move(query)
+        return Response(json.dumps(body), 200, mimetype=MASON)        
 
     def delete(self, user, move):
         """
@@ -230,3 +246,19 @@ class MoveItem(Resource):
             raise MethodNotAllowed
           
 
+class MoveBuilder(MasonBuilder):
+
+    def add_control_delete_move(self, obj):
+        self.add_control_delete(
+            ctrl_name="workoutplanner:delete",
+            title="Delete this move",
+            href=obj.get_url()
+        )
+    
+    def add_control_edit_move(self, obj):
+        self.add_control_put(
+            ctrl_name="edit",
+            title="Edit this move",
+            href=obj.get_url(),
+            schema=Move.json_schema()
+        )

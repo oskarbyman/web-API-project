@@ -6,6 +6,18 @@ from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMedia
 from typing import Union
 from workoutplanner.models import *
 from workoutplanner import db
+from workoutplanner.utils import MasonBuilder
+from werkzeug.routing import BaseConverter
+from workoutplanner.links import *
+
+class WorkoutPlanConverter(BaseConverter):
+    def to_python(self, user):
+        db_user = User.query.filter_by(username=user).first()
+        if db_user is None:
+            raise NotFound
+        return db_user
+    def to_url(self, db_user):
+        return db_user.username
 
 class WorkoutPlanCollection(Resource):
     """
@@ -180,7 +192,8 @@ class WorkoutPlanItem(Resource):
         """
  
         if user:
-            user_id = User.query.filter_by(username=user).first().id
+            user_obj = User.query.filter_by(username=user).first()
+            user_id = user_obj.id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
         else:
             query_result = WorkoutPlan.query.filter_by(name=workout).first()
@@ -189,11 +202,18 @@ class WorkoutPlanItem(Resource):
             user_id = query_result.user_id
         if not query_result:
             raise NotFound
-        result = {
-            "name": query_result.name,
-            "creator": User.query.get(query_result.user_id).username
-        }
-        return result, 200
+        
+        body = WorkoutPlanBuilder(query_result.serialize())
+        body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
+        body.add_control("self", href=request.path)
+        body.add_control("profile", href=WORKOUT_PROFILE_URL)
+        body.add_control("collection", url_for("api.workoutplancollection"))
+        body.add_control("up", query_result.get_collection_url())
+        body.add_control_get_all_move_list_items(query_result)
+        body.add_control_add_move_list_item(query_result)
+        body.add_control_edit_workout_plan(query_result)
+        body.add_control_delete_workout_plan(query_result)
+        return Response(json.dumps(body), 200, mimetype=MASON)
 
     def delete(self, user: str, workout: str) -> Response:
         """
@@ -222,3 +242,36 @@ class WorkoutPlanItem(Resource):
             return Response(status=200)
         else:
             raise MethodNotAllowed
+
+class WorkoutPlanBuilder(MasonBuilder):
+
+    def add_control_get_all_move_list_items(self, obj):
+        self.add_control(
+            ctrl_name="workoutplanner:movelistitems-by",
+            href=obj.get_url() + "moves/",
+            method="GET",
+            title="Get all movelist items in the workout"
+        )
+
+    def add_control_delete_workout_plan(self, obj):
+        self.add_control_delete(
+            ctrl_name="workoutplanner:delete",
+            title="Delete this workout",
+            href=obj.get_url()
+        )
+    
+    def add_control_add_move_list_item(self, obj):
+        self.add_control_post(
+            ctrl_name="workoutplanner:add-movelistitem",
+            title="Add a movelist item to this workout",
+            href=obj.get_url() + "moves/",
+            schema=MoveListItem.json_schema()
+        )
+    
+    def add_control_edit_workout_plan(self, obj):
+        self.add_control_put(
+            ctrl_name="edit",
+            title="Edit this workout",
+            href=obj.get_url(),
+            schema=WorkoutPlan.json_schema()
+        )
