@@ -25,7 +25,7 @@ class MoveCollection(Resource):
         - $ref: '#/components/parameters/user'
         - $ref: '#/components/parameters/moveitem'       
         responses:
-            '200':
+            '201':
                 description: Move posted successfully
                 headers:
                     Location: 
@@ -128,12 +128,13 @@ class MoveItem(Resource):
         - $ref: '#/components/parameters/move'         
         - $ref: '#/components/parameters/moveitem' 
         responses:
-            '200':
-                description: Move replaced successfully
-                content:
-                    string:
-                        example:
-                            /api/users/Noob/moves/Plank
+            '201':
+                description: Move edited successfully
+                Location: 
+                    description: URI of the move
+                    schema:
+                        type: string
+                        example: /api/users/Noob/moves/Plank
         """
         try:
             #  Check if PUTting to a specific users move.
@@ -156,7 +157,9 @@ class MoveItem(Resource):
                 move.description = request.json["description"]
 
                 db.session.commit()
-                return Response(url_for(move), status=200)
+                return Response(status=201, headers={
+                    "Location": url_for("api.moveitem", user=user, move=name)
+                })
             else:
                 raise MethodNotAllowed
         except KeyError:

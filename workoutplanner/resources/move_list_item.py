@@ -25,7 +25,7 @@ class MoveListItemCollection(Resource):
         - $ref: '#/components/parameters/workout'  
         - $ref: '#/components/parameters/movelistitem'   
         responses:
-            '200':
+            '201':
                 description: MoveList item posted successfully
                 headers:
                     Location: 
@@ -198,7 +198,7 @@ class MoveListItemItem(Resource):
         - $ref: '#/components/parameters/position' 
         - $ref: '#/components/parameters/movelistitem'
         responses:
-            '200':
+            '201':
                 description: Movelist item posted successfully
                 headers:
                     Location: 

@@ -100,10 +100,12 @@ class UserItem(Resource):
         responses:
             '200':
                 description: User edited successfully
-                content:
-                    string:
-                        example: 
-                            /api/users/Noob
+                headers:
+                    Location: 
+                        description: URI of the user
+                        schema:
+                            type: string
+                            example: /api/users/Noob
         """
         if request.json == None:
             raise UnsupportedMediaType
@@ -119,7 +121,9 @@ class UserItem(Resource):
         current_user.username  = request.json["username"]
 
         db.session.commit()
-        return Response(url_for(user), status=200)
+        return Response(status=201, headers={
+            "Location": url_for("api.useritem", user=user)
+        })
 
     def get(self, user) -> tuple[str, int]:
         """
@@ -142,7 +146,7 @@ class UserItem(Resource):
         if not query_result:
             raise NotFound
         result = query_result.username
-        return result, 200
+        return result, 201
 
     def delete(self, user: str) -> Response:
         """

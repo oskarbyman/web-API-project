@@ -26,7 +26,7 @@ class WorkoutPlanCollection(Resource):
         - $ref: '#/components/parameters/user'
         - $ref: '#/components/parameters/workoutitem'        
         responses:
-            '200':
+            '201':
                 description: URI of the new plan
                 headers:
                     Location: 
@@ -125,12 +125,14 @@ class WorkoutPlanItem(Resource):
         - $ref: '#/components/parameters/workout'
         - $ref: '#/components/parameters/workoutitem'   
         responses:
-            '200':
+            '201':
                 description: Workout replaced successfully
-                content:
-                    string:
-                        example:
-                            /api/users/Noob/workouts/Light Excercise
+                headers:
+                    Location: 
+                        description: URI of the new workout
+                        schema:
+                            type: string
+                            example: /api/users/Noob/workouts/Light Excercise
         """
         try:
             if workout and user:
@@ -148,7 +150,9 @@ class WorkoutPlanItem(Resource):
                 current_workout.name = request.json["name"]
 
                 db.session.commit()
-                return Response(url_for(current_workout), status=200)
+                return Response(status=201, headers={
+                    "Location": url_for("api.workoutplanitem", user=user, workout=name)
+                })
             else:
                 raise MethodNotAllowed
         except KeyError:

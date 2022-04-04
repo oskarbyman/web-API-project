@@ -14,7 +14,6 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI="sqlite:///" + os.path.join(app.instance_path, "development.db"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
-
     
     app.config["SWAGGER"] = {
         "title": "Workout planner API",
