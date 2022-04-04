@@ -1,0 +1,57 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            edit:
+              encoding: json
+              href: /api/users/Noob/workouts/Max Suffering/moves/0/
+              method: PUT
+              schema:
+                description: A workout plan movelist item
+                properties:
+                  move_creator:
+                    description: The creator of the chosen workout move
+                    type: string
+                  move_name:
+                    description: The name of the chosen workout move
+                    type: string
+                  position:
+                    description: The position of the move in the workout
+                    minimum: 0
+                    type: integer
+                  repetitions:
+                    description: The amount of repetitions for the move
+                    minimum: 0
+                    type: integer
+                required:
+                - move_name
+                - move_creator
+                type: object
+              title: Edit this move list item
+            profile:
+              href: /profiles/movelistitem/
+            self:
+              href: /api/users/Noob/workouts/Max Suffering/moves/0/
+            up:
+              href: /api/users/Noob/workouts/Max Suffering/moves/
+            workoutplanner:delete:
+              href: /api/users/Noob/workouts/Max Suffering/moves/0/
+              method: DELETE
+              title: Delete this move list item
+            workoutplanner:move:
+              href: /api/users/ProAthlete35/moves/Opening Fridge/
+              method: GET
+              title: Get the move of the movelist item
+            workoutplanner:workout:
+              href: /api/users/Noob/workouts/Max Suffering/
+              method: GET
+              title: Get the workout the movelist item is a part of
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          move: Opening Fridge
+          plan: Max Suffering
+          position: 0
+          repetitions: 4

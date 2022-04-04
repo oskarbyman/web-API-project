@@ -1,0 +1,47 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            profile:
+              href: /profiles/movelistitemcollection/
+            self:
+              href: /api/users/Noob/workouts/Max Suffering/moves/
+            up:
+              href: /api/users/Noob/workouts/Max Suffering/
+            workoutplanner:add-movelistitem:
+              encoding: json
+              href: /api/users/Noob/workouts/Max Suffering/moves/
+              method: POST
+              schema:
+                description: A workout plan movelist item
+                properties:
+                  move_creator:
+                    description: The creator of the chosen workout move
+                    type: string
+                  move_name:
+                    description: The name of the chosen workout move
+                    type: string
+                  position:
+                    description: The position of the move in the workout
+                    minimum: 0
+                    type: integer
+                  repetitions:
+                    description: The amount of repetitions for the move
+                    minimum: 0
+                    type: integer
+                required:
+                - move_name
+                - move_creator
+                type: object
+              title: Add a move list item to the workout
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          items:
+          - '@controls':
+              self:
+                href: /api/users/Noob/workouts/Max Suffering/moves/0/
+            move: Opening Fridge
+            position: 0

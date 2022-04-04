@@ -1,0 +1,68 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            collection:
+              href: /api/workouts/
+            edit:
+              encoding: json
+              href: /api/users/Noob/workouts/Max Suffering/
+              method: PUT
+              schema:
+                description: An object representing a workout plan
+                properties:
+                  name:
+                    description: The name of the workout plan
+                    type: string
+                required:
+                - name
+                title: Workout Plan
+                type: object
+              title: Edit this workout
+            profile:
+              href: /profiles/workout/
+            self:
+              href: /api/users/Noob/workouts/Max Suffering/
+            up:
+              href: /api/users/Noob/workouts/
+            workoutplanner:add-movelistitem:
+              encoding: json
+              href: /api/users/Noob/workouts/Max Suffering/moves/
+              method: POST
+              schema:
+                description: A workout plan movelist item
+                properties:
+                  move_creator:
+                    description: The creator of the chosen workout move
+                    type: string
+                  move_name:
+                    description: The name of the chosen workout move
+                    type: string
+                  position:
+                    description: The position of the move in the workout
+                    minimum: 0
+                    type: integer
+                  repetitions:
+                    description: The amount of repetitions for the move
+                    minimum: 0
+                    type: integer
+                required:
+                - move_name
+                - move_creator
+                type: object
+              title: Add a movelist item to this workout
+            workoutplanner:delete:
+              href: /api/users/Noob/workouts/Max Suffering/
+              method: DELETE
+              title: Delete this workout
+            workoutplanner:movelistitems-by:
+              href: /api/users/Noob/workouts/Max Suffering/moves/
+              method: GET
+              title: Get all movelist items in the workout
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          name: Max Suffering
+          user: Noob

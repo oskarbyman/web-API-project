@@ -207,3 +207,9 @@ def populate_db_command():
 
     db.session.commit()
     
+@click.command("nuke-db")
+@with_appcontext
+def nuke_db_command():
+    db.drop_all()
+    db.session.commit()
+    

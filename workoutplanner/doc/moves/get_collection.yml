@@ -1,0 +1,44 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            collection:
+              href: /api/moves/
+            profile:
+              href: /profiles/movecollection/
+            self:
+              href: /api/users/Noob/moves/
+            up:
+              href: /api/users/Noob/
+            workoutplanner:add-move:
+              encoding: json
+              href: /api/users/Noob/moves/
+              method: POST
+              schema:
+                description: A workout move
+                properties:
+                  creator:
+                    description: The creator of the move
+                    type: string
+                  description:
+                    description: The description of the move
+                    type: string
+                  name:
+                    description: The name of the workout move
+                    type: string
+                required:
+                - name
+                - description
+                - creator
+                type: object
+              title: Add a move
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          items:
+          - '@controls':
+              self:
+                href: /api/users/Noob/moves/Plank/
+            name: Plank

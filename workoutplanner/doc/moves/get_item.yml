@@ -1,0 +1,47 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            collection:
+              href: /api/moves/
+            edit:
+              encoding: json
+              href: /api/users/Noob/moves/Plank/
+              method: PUT
+              schema:
+                description: A workout move
+                properties:
+                  creator:
+                    description: The creator of the move
+                    type: string
+                  description:
+                    description: The description of the move
+                    type: string
+                  name:
+                    description: The name of the workout move
+                    type: string
+                required:
+                - name
+                - description
+                - creator
+                type: object
+              title: Edit this move
+            profile:
+              href: /profiles/move/
+            self:
+              href: /api/users/Noob/moves/Plank/
+            up:
+              href: /api/users/Noob/moves/
+            workoutplanner:delete:
+              href: /api/users/Noob/moves/Plank/
+              method: DELETE
+              title: Delete this move
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          description: Use your muscles to keep your body in a straight horizontal
+            line
+          name: Plank
+          user: Noob

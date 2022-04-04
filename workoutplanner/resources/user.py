@@ -9,6 +9,7 @@ from workoutplanner import db
 from workoutplanner.utils import MasonBuilder
 from werkzeug.routing import BaseConverter
 from workoutplanner.links import *
+from flasgger import swag_from
 
 class UserConverter(BaseConverter):
     def to_python(self, user):
@@ -69,6 +70,7 @@ class UserCollection(Resource):
             "Location": url_for("api.useritem", user=user)
         })
         
+    @swag_from("/workoutplanner/doc/users/get_collection.yml")
     def get(self) -> tuple[list, int]:
         """
         Get all users
@@ -144,6 +146,7 @@ class UserItem(Resource):
             "Location": url_for("api.useritem", user=user)
         })
 
+    @swag_from("/workoutplanner/doc/users/get_item.yml")
     def get(self, user) -> tuple[str, int]:
         """
         Get the user

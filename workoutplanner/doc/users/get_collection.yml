@@ -1,0 +1,38 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            profile:
+              href: /profiles/usercollection/
+            self:
+              href: /api/users/
+            up:
+              href: /api/
+            workoutplanner:add-user:
+              encoding: json
+              href: /api/users/
+              method: POST
+              schema:
+                description: An user
+                properties:
+                  username:
+                    description: An unique username
+                    type: string
+                required:
+                - username
+                type: object
+              title: Add an user
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          items:
+          - '@controls':
+              self:
+                href: /api/users/ProAthlete35/
+            username: ProAthlete35
+          - '@controls':
+              self:
+                href: /api/users/Noob/
+            username: Noob

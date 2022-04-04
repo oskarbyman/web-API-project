@@ -7,6 +7,7 @@ from workoutplanner import db
 from workoutplanner.utils import MasonBuilder
 from werkzeug.routing import BaseConverter
 from workoutplanner.links import *
+from flasgger import swag_from
 
 class MoveListItemConverter(BaseConverter):
     def to_python(self, user):
@@ -133,6 +134,7 @@ class MoveListItemCollection(Resource):
                 "Move already exists"
             )
 
+    @swag_from("/workoutplanner/doc/movelistitems/get_collection.yml")
     def get(self, workout: str, user: str=None) -> tuple[list, int]:
         """ 
         Get the list of workout move list items.
@@ -323,6 +325,8 @@ class MoveListItemItem(Resource):
                 "Location": url_for("api.movelistitemitem", user=user, workout=workout, position=new_position)
             })
 
+
+    @swag_from("/workoutplanner/doc/movelistitems/get_item.yml")
     def get(self, workout: str, position: int, user: str=None) -> tuple[dict, int]:
         """
         Get a workout move list item.

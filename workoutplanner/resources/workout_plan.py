@@ -9,6 +9,7 @@ from workoutplanner import db
 from workoutplanner.utils import MasonBuilder
 from werkzeug.routing import BaseConverter
 from workoutplanner.links import *
+from flasgger import swag_from
 
 class WorkoutPlanConverter(BaseConverter):
     def to_python(self, user):
@@ -82,6 +83,7 @@ class WorkoutPlanCollection(Resource):
                 409
             )
 
+    @swag_from("/workoutplanner/doc/workouts/get_collection.yml")
     def get(self, user: str=None) -> list:
         """
         Get the list of workout plans
@@ -179,7 +181,9 @@ class WorkoutPlanItem(Resource):
         except KeyError:
             db.session.rollback()
             raise BadRequest
-
+    
+    
+    @swag_from("/workoutplanner/doc/workouts/get_item.yml")
     def get(self, workout: str, user: str=None) -> tuple[dict, int]:
         """
         Gets the requested workout

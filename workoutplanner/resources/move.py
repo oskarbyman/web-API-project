@@ -8,6 +8,7 @@ from workoutplanner import db
 from workoutplanner.utils import MasonBuilder
 from werkzeug.routing import BaseConverter
 from workoutplanner.links import *
+from flasgger import swag_from
 
 class MoveConverter(BaseConverter):
     def to_python(self, user):
@@ -79,6 +80,7 @@ class MoveCollection(Resource):
             db.session.rollback()
             raise Conflict("Move already exists")
 
+    @swag_from("/workoutplanner/doc/moves/get_collection.yml")
     def get(self, user: str=None) -> tuple[list, int]:
         """
         Queries all the moves or moves created by a user
@@ -190,6 +192,7 @@ class MoveItem(Resource):
             db.session.rollback()
             raise Conflict("Move already exists")
 
+    @swag_from("/workoutplanner/doc/moves/get_item.yml")
     def get(self, user: str=None, move: str=None) -> tuple[dict, int]:
         """
         Gets the specific move from the general move endpoint or the user specific endpoint

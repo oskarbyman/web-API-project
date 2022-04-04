@@ -1,0 +1,37 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            collection:
+              href: /api/workouts/
+            profile:
+              href: /profiles/workoutcollection/
+            self:
+              href: /api/users/Noob/workouts/
+            up:
+              href: /api/users/Noob/
+            workoutplanner:add-workout:
+              encoding: json
+              href: /api/users/Noob/workouts/
+              method: POST
+              schema:
+                description: An object representing a workout plan
+                properties:
+                  name:
+                    description: The name of the workout plan
+                    type: string
+                required:
+                - name
+                title: Workout Plan
+                type: object
+              title: Add a workout
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          items:
+          - '@controls':
+              self:
+                href: /api/users/Noob/workouts/Max Suffering/
+            name: Max Suffering

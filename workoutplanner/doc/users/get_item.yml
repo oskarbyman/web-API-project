@@ -1,0 +1,79 @@
+responses:
+  '200':
+    content:
+      application/vnd.mason+json:
+        example:
+          '@controls':
+            collection:
+              href: /api/users/
+            edit:
+              encoding: json
+              href: /api/users/Noob/
+              method: PUT
+              schema:
+                description: An user
+                properties:
+                  username:
+                    description: An unique username
+                    type: string
+                required:
+                - username
+                type: object
+              title: Edit this user
+            profile:
+              href: /profiles/user/
+            self:
+              href: /api/users/Noob/
+            workoutplanner:add-move:
+              encoding: json
+              href: /api/users/Noob/moves/
+              method: POST
+              schema:
+                description: A workout move
+                properties:
+                  creator:
+                    description: The creator of the move
+                    type: string
+                  description:
+                    description: The description of the move
+                    type: string
+                  name:
+                    description: The name of the workout move
+                    type: string
+                required:
+                - name
+                - description
+                - creator
+                type: object
+              title: Add a move for this user
+            workoutplanner:add-workout:
+              encoding: json
+              href: /api/users/Noob/workouts/
+              method: POST
+              schema:
+                description: An object representing a workout plan
+                properties:
+                  name:
+                    description: The name of the workout plan
+                    type: string
+                required:
+                - name
+                title: Workout Plan
+                type: object
+              title: Add a workout for this user
+            workoutplanner:delete:
+              href: /api/users/Noob/
+              method: DELETE
+              title: Delete this user
+            workoutplanner:moves-by:
+              href: /api/users/Noob/moves/
+              method: GET
+              title: Get all moves of this user
+            workoutplanner:workouts-by:
+              href: /api/users/Noob/workouts/
+              method: GET
+              title: Get all workouts of this user
+          '@namespaces':
+            workoutplanner:
+              name: /link-relations/
+          username: Noob
