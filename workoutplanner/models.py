@@ -87,7 +87,7 @@ class MoveListItem(db.Model):
 
     repetitions = db.Column(db.Integer)
 
-    plan_id = db.Column(db.Integer, db.ForeignKey("workout_plan.id"), nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey("workout_plan.id", ondelete="CASCADE"), nullable=False)
     move_id = db.Column(db.Integer, db.ForeignKey("move.id"), nullable=False)
 
     move = db.relationship("Move", back_populates="workout_move", uselist=False)
