@@ -59,7 +59,7 @@ def make_api(app):
     app.url_map.converters["workout_plan"] = WorkoutPlanConverter
     app.url_map.converters["move_list_item"] = MoveListItemConverter
 
-    @app.route("/api")
+    @app.route("/api/")
     def api_entry():
         api_entrypoint = {
             "@namespaces": {
@@ -69,13 +69,13 @@ def make_api(app):
             },
             "@controls": {
                 "workoutplanner:users-all": {
-                    "href": "/api/users"
+                    "href": "/api/users/"
                 },
                 "workoutplanner:moves-all": {
-                    "href": "/api/moves"
+                    "href": "/api/moves/"
                 },
                 "workoutplanner:workouts-all": {
-                    "href": "/api/workouts"
+                    "href": "/api/workouts/"
                 }
             }
         }
