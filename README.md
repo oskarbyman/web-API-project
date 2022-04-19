@@ -10,15 +10,16 @@ Remember to include all required documentation and HOWTOs, including how to crea
 #### Instructions for installing the server in a virtual enviroment:
 1. Create a virtual enviroment and navigate to a copy of the project
 2. Install the project:
-    - `python setup.py install`
-3. Set enviromental variable:
+    - `python setup.py install` or `pip install .`
+3. Restart the enviroment and activate it again
+4. Set enviromental variable:
     - Bash: `export FLASK_APP=workoutplanner`
     - CMD: `set FLASK_APP=workoutplanner`
     - Powershell: `$env:FLASK_APP = "workoutplanner"`
-4. create a database:
+5. create a database:
     1. `flask init-db`
-    2. `flask gen-testdata`
-5. Run the server:
+    2. `flask gen-testdata` //Optional
+6. Run the server:
     - `flask run`
 ---
 #### Instructions for running the server:
