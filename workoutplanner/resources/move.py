@@ -135,10 +135,10 @@ class MoveCollection(Resource):
 class MoveItem(Resource):
     """
     Workout move resource
-    Contains PUT, GET and DELETE methods
+    Contains PUT and GET methods
 
     Covers the following paths:
-        /api/users/{user}/moves/{move}, GET, PUT, DELETE
+        /api/users/{user}/moves/{move}, GET, PUT
     """
 
     def put(self, user: str=None, move: str=None) -> Response:
@@ -181,7 +181,7 @@ class MoveItem(Resource):
 
                 db.session.commit()
                 return Response(status=201, headers={
-                    "Location": url_for("api.moveitem", user=user, move=name)
+                    "Location": url_for("api.moveitem", user=user, move=request.json["name"])
                 })
             else:
                 raise MethodNotAllowed
@@ -228,34 +228,8 @@ class MoveItem(Resource):
         body.add_control("collection", url_for("api.movecollection"))
         body.add_control("up", query.get_collection_url())
         body.add_control_edit_move(query)
-        body.add_control_delete_move(query)
-        return Response(json.dumps(body), 200, mimetype=MASON)        
-
-    def delete(self, user, move):
-        """
-        Allows deletion of a users workout move
-        ---
-        description: Obviously requires the user to be authenticated, but auth is not implemented yet
-        parameters:
-        - $ref: '#/components/parameters/user'
-        - $ref: '#/components/parameters/move'   
-        responses:
-            '200':
-                description: Move deleted successfully
-        """
-        if user and move:
-            #  Get user id based on the user given by the URI
-            user_id = User.query.filter_by(username=user).id
-            query_result = Move.query.filter_by(name=move, user_id=user_id).first()
-            #  Check if the query produced a result, if not then raise a NotFound exception
-            if not query_result:
-                raise NotFound
-            else:
-                db.session.delete(query_result)
-                db.session.commit()
-                return Response(status=200)
-        else:
-            raise MethodNotAllowed
+        #body.add_control_delete_move(query)
+        return Response(json.dumps(body), 200, mimetype=MASON)
           
 class MoveCollectionBuilder(MasonBuilder):
 

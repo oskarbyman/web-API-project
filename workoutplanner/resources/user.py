@@ -178,27 +178,8 @@ class UserItem(Resource):
         body.add_control_add_move(user_obj)
         body.add_control_add_workout(user_obj)
         body.add_control_edit_user(user_obj)
-        body.add_control_delete_user(user_obj)
+        #body.add_control_delete_user(user_obj)
         return Response(json.dumps(body), 200, mimetype=MASON)
-
-    def delete(self, user: str) -> Response:
-        """
-        Delete user
-        ---
-        description: Delete the user
-        parameters:
-        - $ref: '#/components/parameters/user'   
-        responses:
-            '200':
-                description: User deleted successfully
-        """
-        query_result = User.query.filter_by(username=user).first()
-        if not query_result:
-            raise NotFound
-        else:
-            db.session.delete(query_result)
-            db.session.commit()
-            return Response(status=200)
 
 class UserCollectionBuilder(MasonBuilder):
 
