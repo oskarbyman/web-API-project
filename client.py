@@ -99,6 +99,8 @@ def main():
             except ValueError:
                 command = 0
 
+        command = int(input("Next command: ")) - 1
+        
         if command == -1:
             return 0
         if command < controls_count:
