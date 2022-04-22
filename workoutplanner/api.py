@@ -69,12 +69,15 @@ def make_api(app):
             },
             "@controls": {
                 "workoutplanner:users-all": {
+                    "title": "Show all users",
                     "href": "/api/users/"
                 },
                 "workoutplanner:moves-all": {
+                    "title": "Show all moves",
                     "href": "/api/moves/"
                 },
                 "workoutplanner:workouts-all": {
+                    "title": "Show all workouts",
                     "href": "/api/workouts/"
                 }
             }
