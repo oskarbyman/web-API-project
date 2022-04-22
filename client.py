@@ -10,8 +10,17 @@ def get_body(href):
     body = resp.json()
     return body
 
+def post_item(control):
+    pass
+
+def put_item(control):
+    pass
+
+def delete_item(control):
+    pass
+
 def get_controls(controls):
-    b_only_controls_with_title=False
+    b_only_controls_with_title=True
 
     keys = list(controls.keys())
     control_keys = []
@@ -39,7 +48,7 @@ def get_items(items):
             if key[0] != "@":
                 if item_description != "":
                     item_description += ", "
-                item_description += key + ": " + item[key]
+                item_description += key + ": " + str(item[key])
         
         item_labels.append(item_description)
 
@@ -57,7 +66,7 @@ def main():
         body = resp.json()
         current_href = "/api/"
     
-    command = 1
+    command = 0
     while command != -1:
         #print(current_href)
         body = get_body(current_href)
@@ -65,6 +74,7 @@ def main():
         print("Options available")
         print(0, "Exit the program")
 
+        ## Get controls for current href
         controls_count = 0
         control_keys = []
         if "@controls" in body:
@@ -73,7 +83,7 @@ def main():
             for i in range(controls_count):
                 print(i + 1, control_names[i])
         
-        
+        ## Get items for current href
         items_count = 0
         if "items" in body:
             item_names = get_items(body["items"])
@@ -81,12 +91,29 @@ def main():
             for i in range(items_count):
                 print(i + controls_count + 1, item_names[i])
 
+        while True:
+            try:
+                command = int(input("Next command: ")) - 1
+                if command >= 0 and command < controls_count + items_count:
+                    break
+            except ValueError:
+                command = 0
 
-        command = int(input("Next command: ")) - 1
         if command == -1:
             return 0
         if command < controls_count:
-            current_href = body["@controls"][control_keys[command]]["href"]
+            if "method" in body["@controls"][control_keys[command]]:
+                method = body["@controls"][control_keys[command]]
+                if method == "POST":
+                    post_item(body["@controls"][control_keys[command]])
+                if method == "PUT":
+                    put_item(body["@controls"][control_keys[command]])
+                if method == "DELETE":
+                    delete_item(body["@controls"][control_keys[command]])
+                if method == "GET":
+                    current_href = body["@controls"][control_keys[command]]["href"]
+            else:
+                current_href = body["@controls"][control_keys[command]]["href"]
         else:
             index = command - controls_count
             current_href = body["items"][index]["@controls"]["self"]["href"]
