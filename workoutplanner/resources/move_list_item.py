@@ -121,7 +121,7 @@ class MoveListItemCollection(Resource):
             db.session.commit()
             #return Response(url_for(move), status=200)
             return Response(status=201, headers={
-                "Location": url_for("api.movelistitemitem", user=user, workout=workout, position=position)
+                "Location": move.get_url()#url_for("api.movelistitemitem", user=user, workout=workout, position=position)
             })
             
         except KeyError:
@@ -322,7 +322,7 @@ class MoveListItemItem(Resource):
             db.session.commit()
             #return Response(url_for(move_list_item), status=200)
             return Response(status=201, headers={
-                "Location": url_for("api.movelistitemitem", user=user, workout=workout, position=new_position)
+                "Location": move_list_item.get_url()#url_for("api.movelistitemitem", user=user, workout=workout, position=new_position)
             })
 
 

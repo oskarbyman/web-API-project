@@ -4,20 +4,61 @@ SERVER_URL = "http://localhost:5000"
 JSON = "application/json"
 MASON = "application/vnd.mason+json"
 
-def get_body(href):
-    with requests.Session() as s:
-        resp = s.get(SERVER_URL + href)
+def get_body(s, href):
+    #with requests.Session() as s:
+    resp = s.get(SERVER_URL + href)
     body = resp.json()
     return body
 
-def post_item(control):
-    pass
+def post_item(s, control):
+    #print(control)
+    href = control["href"]
+    headers={
+        'Content-type':'application/json', 
+        'Accept':'application/json'
+    }
 
-def put_item(control):
-    pass
+    schema = control["schema"]
+    #print(control["schema"])
+    properties = fill_schema(schema)   #control["schema"]["properties"]
+    print(properties)
+    resp = s.post(SERVER_URL + href, json=properties, headers=headers)
+    print(f"response: {resp.reason}")
+    print(resp.headers["Location"])
+    print("#########")
+    return resp.headers["Location"]
 
-def delete_item(control):
-    pass
+
+def put_item(s, control):
+    return control["href"]
+
+def delete_item(s, control):
+    return control["href"]
+
+
+def fill_schema(json):
+    print(f"{json['description']}:")
+    properties = json["properties"]
+    for p in json["properties"]:
+        req = False
+        if p in json["required"]:
+            req = True
+        type = str
+        if json["properties"][p]["type"] == "integer":
+            type = int
+        #if json["properties"][p]["type"] == "object":
+        #    properties[p] = fill_schema(json["properties"][p])
+        #    continue
+        properties[p] = get_input(f"{'*' if req else ''} {p} ({type.__name__}): ", type)
+    return properties
+
+def get_input(prompt, valueType):
+    while True:
+        try:
+            return valueType(input(prompt)) 
+        except ValueError:
+            print("Incorrect input!")
+
 
 def get_controls(controls):
     b_only_controls_with_title=True
@@ -57,8 +98,11 @@ def get_items(items):
     return item_labels
 
 def main():
-    with requests.Session() as s:
-        s.headers.update({"Accept": "application/vnd.mason+json"})
+    s = requests.Session()
+
+    #with requests.Session() as s:
+    s.headers.update({"Accept": "application/vnd.mason+json"})
+
     resp = s.get(SERVER_URL + "/api/")
     if resp.status_code != 200:
         print("Unable to access API.")
@@ -69,7 +113,7 @@ def main():
     
     command = 0
     while command != -1:
-        body = get_body(current_href)
+        body = get_body(s, current_href)
         print("----------------------------------")
         print(f"Current URI: {current_href}")
         print("Options available:")
@@ -106,25 +150,26 @@ def main():
 
 
         if command == -1:
-            return 0
+            s.close()
+            return 0    
         if command < controls_count:
             if "method" in body["@controls"][control_keys[command]]:
                 method = body["@controls"][control_keys[command]]["method"]
 
                 if method == "POST":
-                    post_item(body["@controls"][control_keys[command]])
+                    current_href = post_item(s, body["@controls"][control_keys[command]])
                 if method == "PUT":
-                    put_item(body["@controls"][control_keys[command]])
+                    current_href = put_item(s, body["@controls"][control_keys[command]])
                 if method == "DELETE":
-                    delete_item(body["@controls"][control_keys[command]])
+                    current_href = delete_item(s, body["@controls"][control_keys[command]])
                 if method == "GET":
                     current_href = body["@controls"][control_keys[command]]["href"]
-                    print(f"asdf {current_href}")
             else:
                 current_href = body["@controls"][control_keys[command]]["href"]
         else:
             index = command - controls_count
             current_href = body["items"][index]["@controls"]["self"]["href"]
+    s.close()
 
 
 if __name__ == "__main__":

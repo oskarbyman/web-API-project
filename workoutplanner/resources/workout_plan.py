@@ -71,7 +71,7 @@ class WorkoutPlanCollection(Resource):
                 db.session.commit()
                 #return Response(url_for(plan), status=200)
                 return Response(status=201, headers={
-                    "Location": url_for("api.workoutplanitem", user=user, workout=name)
+                    "Location": plan.get_url()#url_for("api.workoutplanitem", user=user, workout=name)
                 })
         except KeyError:
             db.session.rollback()
@@ -176,7 +176,7 @@ class WorkoutPlanItem(Resource):
 
                 db.session.commit()
                 return Response(status=201, headers={
-                    "Location": url_for("api.workoutplanitem", user=user, workout=name)
+                    "Location": current_workout.get_url()#url_for("api.workoutplanitem", user=user, workout=name)
                 })
             else:
                 raise MethodNotAllowed

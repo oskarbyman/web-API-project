@@ -70,7 +70,7 @@ class MoveCollection(Resource):
             db.session.commit()
             #return Response(url_for(move), status=200)
             return Response(status=201, headers={
-                "Location": url_for("api.moveitem", user=user, move=name)
+                "Location": move.get_url()#url_for("api.moveitem", user=user, move=name)
             })
             
         except KeyError:
@@ -184,7 +184,7 @@ class MoveItem(Resource):
 
                 db.session.commit()
                 return Response(status=201, headers={
-                    "Location": url_for("api.moveitem", user=user, move=request.json["name"])
+                    "Location": move.get_url()#url_for("api.moveitem", user=user, move=request.json["name"])
                 })
             else:
                 raise MethodNotAllowed

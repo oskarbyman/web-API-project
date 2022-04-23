@@ -29,10 +29,10 @@ class User(db.Model):
         self.username = doc["username"]
 
     def get_url(self):
-        return url_for("api.usercollection") + self.username + "/"
+        return "/api/users/" + self.username + "/"
     
     def get_collection_url(self):
-        return url_for("api.usercollection")
+        return "/api/users/"
 
     @staticmethod
     def json_schema():

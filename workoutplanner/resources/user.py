@@ -67,7 +67,7 @@ class UserCollection(Resource):
             return Response("User already exists", 409)
 
         return Response(status=201, headers={
-            "Location": url_for("api.useritem", user=user)
+            "Location": user.get_url()#url_for("api.useritem", user=user)
         })
         
     @swag_from("/workoutplanner/doc/users/get_collection.yml")
@@ -143,7 +143,7 @@ class UserItem(Resource):
 
         db.session.commit()
         return Response(status=201, headers={
-            "Location": url_for("api.useritem", user=user)
+            "Location": current_user.get_url()#url_for("api.useritem", user=user)
         })
 
     @swag_from("/workoutplanner/doc/users/get_item.yml")
