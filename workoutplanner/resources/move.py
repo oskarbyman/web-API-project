@@ -119,10 +119,13 @@ class MoveCollection(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=MOVE_COLLECTION_PROFILE_URL)
+        
         if user:
-            body.add_control("up", href=user_obj.get_url())
-            body.add_control("collection", href=url_for("api.movecollection"))
+            #body.add_control("collection", href=url_for("api.movecollection"), , title="All moves")
+            body.add_control("up", href=user_obj.get_url(), title="Up")
             body.add_control_add_move(user_obj)
+        else:
+            body.add_control("up", href=url_for("api_entry"), title="Up")
         
         for move in query:
             item = MoveBuilder(move.serialize(short_form=True))
@@ -225,8 +228,8 @@ class MoveItem(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=MOVE_PROFILE_URL)
-        body.add_control("collection", url_for("api.movecollection"))
-        body.add_control("up", query.get_collection_url())
+        body.add_control("collection", url_for("api.movecollection"), title="All moves")
+        body.add_control("up", query.get_collection_url(), title="Up")
         body.add_control_edit_move(query)
         #body.add_control_delete_move(query)
         return Response(json.dumps(body), 200, mimetype=MASON)

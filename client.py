@@ -31,6 +31,7 @@ def get_controls(controls):
             if "title" in controls[key]:
                 control_keys.append(key)
                 control_labels.append(controls[key]["title"])
+
         else:
             control_keys.append(key)
             control_labels.append(key)
@@ -68,11 +69,11 @@ def main():
     
     command = 0
     while command != -1:
-        #print(current_href)
         body = get_body(current_href)
-
-        print("Options available")
-        print(0, "Exit the program")
+        print("----------------------------------")
+        print(f"Current URI: {current_href}")
+        print("Options available:")
+        print("", 0, "Exit the program")
 
         ## Get controls for current href
         controls_count = 0
@@ -81,31 +82,35 @@ def main():
             control_keys, control_names = get_controls(body["@controls"])
             controls_count = len(control_names)
             for i in range(controls_count):
-                print(i + 1, control_names[i])
+                print("",i + 1, control_names[i])
         
         ## Get items for current href
         items_count = 0
         if "items" in body:
+            print("Items:")
             item_names = get_items(body["items"])
             items_count = len(item_names)
             for i in range(items_count):
-                print(i + controls_count + 1, item_names[i])
+                print("",i + controls_count + 1, item_names[i])
 
         while True:
             try:
                 command = int(input("Next command: ")) - 1
-                if command >= 0 and command < controls_count + items_count:
+                if command >= -1 and command < controls_count + items_count:
                     break
+                else:
+                    print("Incorrect command!")
             except ValueError:
+                print("Incorrect command!")
                 command = 0
 
-        command = int(input("Next command: ")) - 1
-        
+
         if command == -1:
             return 0
         if command < controls_count:
             if "method" in body["@controls"][control_keys[command]]:
-                method = body["@controls"][control_keys[command]]
+                method = body["@controls"][control_keys[command]]["method"]
+
                 if method == "POST":
                     post_item(body["@controls"][control_keys[command]])
                 if method == "PUT":
@@ -114,6 +119,7 @@ def main():
                     delete_item(body["@controls"][control_keys[command]])
                 if method == "GET":
                     current_href = body["@controls"][control_keys[command]]["href"]
+                    print(f"asdf {current_href}")
             else:
                 current_href = body["@controls"][control_keys[command]]["href"]
         else:

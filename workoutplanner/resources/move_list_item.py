@@ -183,8 +183,8 @@ class MoveListItemCollection(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=MOVELISTITEM_COLLECTION_PROFILE_URL)
+        body.add_control("up", href=plan_obj.get_url(), title="Up")
         if user and workout:
-            body.add_control("up", href=plan_obj.get_url())
             body.add_control_add_move_list_item(plan_obj)
         
         for movelistitem in query:
@@ -363,7 +363,7 @@ class MoveListItemItem(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=MOVELISTITEM_PROFILE_URL)
-        body.add_control("up", query_result.get_collection_url())
+        body.add_control("up", href=query_result.get_collection_url(), title="Up")
         body.add_control_get_workout_plan(query_result)
         body.add_control_get_move(query_result)
         body.add_control_edit_movelist_item(query_result)

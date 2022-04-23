@@ -93,7 +93,7 @@ class UserCollection(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=USER_COLLECTION_PROFILE_URL)
-        body.add_control("up", href="/api/")
+        body.add_control("up", href="/api/", title="Up")
         body.add_control_add_user()
         
         for user in User.query.all():
@@ -172,7 +172,7 @@ class UserItem(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=USER_PROFILE_URL)
-        body.add_control("collection", url_for("api.usercollection"))# href=api.url_for(UserCollection))
+        body.add_control("up", href=url_for("api.usercollection"), title="Up")# href=api.url_for(UserCollection))
         body.add_control_get_all_moves(user_obj)
         body.add_control_get_all_workouts(user_obj)
         body.add_control_add_move(user_obj)

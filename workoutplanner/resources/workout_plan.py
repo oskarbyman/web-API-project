@@ -117,10 +117,12 @@ class WorkoutPlanCollection(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=WORKOUT_COLLECTION_PROFILE_URL)
+        #body.add_control("collection", href=url_for("api.workoutplancollection"))
         if user:
-            body.add_control("up", href=user_obj.get_url())
-            body.add_control("collection", href=url_for("api.workoutplancollection"))
+            body.add_control("up", href=user_obj.get_url(), title="Up")
             body.add_control_add_workout(user_obj)
+        else:
+            body.add_control("up", href=url_for("api_entry"), title="Up")
         
         for workout in query:
             item = WorkoutPlanBuilder(workout.serialize(short_form=True))
@@ -220,8 +222,8 @@ class WorkoutPlanItem(Resource):
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=WORKOUT_PROFILE_URL)
-        body.add_control("collection", url_for("api.workoutplancollection"))
-        body.add_control("up", query_result.get_collection_url())
+        body.add_control("collection", url_for("api.workoutplancollection"), title="All workouts")
+        body.add_control("up", query_result.get_collection_url(), title="Up")
         body.add_control_get_all_move_list_items(query_result)
         body.add_control_add_move_list_item(query_result)
         body.add_control_edit_workout_plan(query_result)
