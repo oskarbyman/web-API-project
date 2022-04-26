@@ -247,10 +247,9 @@ class WorkoutPlanItem(Resource):
                 user_id = User.query.filter_by(username=user).first().id
                 query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()          
             else:
-                query_result = WorkoutPlan.query.filter_by(name=workout).first()
+                raise MethodNotAllowed
             if not query_result:
                 raise NotFound
-                return
 
             db.session.delete(query_result)
             db.session.commit()

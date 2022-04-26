@@ -387,8 +387,9 @@ class MoveListItemItem(Resource):
         """
         if user and workout and position:
             user_id = User.query.filter_by(username=user).first().id
-            plan_id = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
-            query_result = MoveListItem.query.filter_by(plan_id=plan_id, user_id=user_id, position=position).first()
+            plan_id = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first().id
+            query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
+
             if not query_result:
                 raise NotFound
             else:

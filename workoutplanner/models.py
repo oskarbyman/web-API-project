@@ -49,7 +49,12 @@ class WorkoutPlan(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", back_populates="workouts", uselist=False)
-    workout_moves = db.relationship("MoveListItem", back_populates="plan", order_by="MoveListItem.position", collection_class=ordering_list("position"))
+    workout_moves = db.relationship("MoveListItem",
+                                    back_populates="plan",
+                                    cascade="all, delete",
+                                    passive_deletes=True,
+                                    order_by="MoveListItem.position",
+                                    collection_class=ordering_list("position"))
 
     __table_args__ = (db.UniqueConstraint("name", "user_id", name="_name_user_constraint"),)
 
