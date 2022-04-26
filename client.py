@@ -24,9 +24,11 @@ def post_item(s, control):
     print(properties)
     resp = s.post(SERVER_URL + href, json=properties, headers=headers)
     print(f"response: {resp.reason}")
-    print(resp.headers["Location"])
+    if "Location" in resp.headers:
+        print(resp.headers["Location"])
+        href = resp.headers["Location"]
     print("#########")
-    return resp.headers["Location"]
+    return href
 
 
 def put_item(s, control):
@@ -49,16 +51,30 @@ def fill_schema(json):
         #if json["properties"][p]["type"] == "object":
         #    properties[p] = fill_schema(json["properties"][p])
         #    continue
-        properties[p] = get_input(f"{'*' if req else ''} {p} ({type.__name__}): ", type)
+        tmp_property = get_input(f"{'*' if req else ''} {p} ({type.__name__}): ", type, req)
+        if tmp_property:
+            properties[p] = tmp_property
     return properties
 
-def get_input(prompt, valueType):
+def get_input(prompt, valueType, required):
     while True:
         try:
-            return valueType(input(prompt)) 
+            user_input = input(prompt)
+            if not required and user_input == "":
+                return None
+            return valueType(user_input) 
         except ValueError:
             print("Incorrect input!")
 
+def get_object_info(body):
+    info = ""
+    for key in body.keys():
+        if key[0] != "@" and key != "items":
+            if info == "":
+                info = key + ": " + str(body[key])
+            else:
+                info += ", " + key + ": " + str(body[key])
+    return info
 
 def get_controls(controls):
     b_only_controls_with_title=True
@@ -112,10 +128,18 @@ def main():
         current_href = "/api/"
     
     command = 0
-    while command != -1:
+    while True:
         body = get_body(s, current_href)
+        print()
         print("----------------------------------")
         print(f"Current URI: {current_href}")
+
+        ## Print info about object in current URI
+        object_info = get_object_info(body)
+        if object_info != "":
+            print("Current item")
+            print("", object_info)
+
         print("Options available:")
         print("", 0, "Exit the program")
 
