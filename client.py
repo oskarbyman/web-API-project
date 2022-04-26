@@ -21,7 +21,7 @@ def post_item(s, control):
     schema = control["schema"]
     #print(control["schema"])
     properties = fill_schema(schema)   #control["schema"]["properties"]
-    print(properties)
+    #print(properties)
     resp = s.post(SERVER_URL + href, json=properties, headers=headers)
     print(f"response: {resp.reason}")
     if "Location" in resp.headers:
@@ -34,13 +34,20 @@ def post_item(s, control):
 def put_item(s, control):
     return control["href"]
 
-def delete_item(s, control):
-    return control["href"]
+def delete_item(s, control, next_href):
+    print(control)
+    resp = s.delete(SERVER_URL + control["href"])
+
+    if resp.status_code == 200:
+        return next_href
+    else:
+        return control["href"]
 
 
 def fill_schema(json):
     print(f"{json['description']}:")
     properties = json["properties"]
+    filled_schema = {}
     for p in json["properties"]:
         req = False
         if p in json["required"]:
@@ -51,10 +58,12 @@ def fill_schema(json):
         #if json["properties"][p]["type"] == "object":
         #    properties[p] = fill_schema(json["properties"][p])
         #    continue
-        tmp_property = get_input(f"{'*' if req else ''} {p} ({type.__name__}): ", type, req)
-        if tmp_property:
-            properties[p] = tmp_property
-    return properties
+        input_property = get_input(f"{'*' if req else ''} {p} ({type.__name__}): ", type, req)
+        if input_property:
+            filled_schema.update({p: input_property})
+            properties[p] = input_property
+
+    return filled_schema
 
 def get_input(prompt, valueType, required):
     while True:
@@ -62,7 +71,10 @@ def get_input(prompt, valueType, required):
             user_input = input(prompt)
             if not required and user_input == "":
                 return None
-            return valueType(user_input) 
+            elif required and user_input == "":
+                pass
+            else:
+                return valueType(user_input) 
         except ValueError:
             print("Incorrect input!")
 
@@ -185,7 +197,7 @@ def main():
                 if method == "PUT":
                     current_href = put_item(s, body["@controls"][control_keys[command]])
                 if method == "DELETE":
-                    current_href = delete_item(s, body["@controls"][control_keys[command]])
+                    current_href = delete_item(s, body["@controls"][control_keys[command]], body["@controls"]["up"]["href"])
                 if method == "GET":
                     current_href = body["@controls"][control_keys[command]]["href"]
             else:
