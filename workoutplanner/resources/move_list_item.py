@@ -385,7 +385,8 @@ class MoveListItemItem(Resource):
             '200':
                 description: Move list item deleted successfully
         """
-        if user and workout and position:
+        #if user and workout and position:
+        if user and workout:
             user_id = User.query.filter_by(username=user).first().id
             plan_id = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first().id
             query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
