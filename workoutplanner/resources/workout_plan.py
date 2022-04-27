@@ -169,14 +169,14 @@ class WorkoutPlanItem(Resource):
                     raise BadRequest(description=str(e))
 
                 user_id = User.query.filter_by(username=user).first().id
-                current_workout = WorkoutPlan.query.filter_by(user_id=user_id, name=workout)
+                current_workout = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first()
                 if not current_workout:
                     raise NotFound
                 current_workout.name = request.json["name"]
 
                 db.session.commit()
                 return Response(status=201, headers={
-                    "Location": current_workout.get_url()#url_for("api.workoutplanitem", user=user, workout=name)
+                    "Location": current_workout.get_url()
                 })
             else:
                 raise MethodNotAllowed
