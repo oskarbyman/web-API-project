@@ -16,9 +16,9 @@ api
 ___________________________________________________________________________________________________________
 |   endpoint            |URI                                                        |GET|POST |PUT|DELETE |
 |users collection       |/api/users                                                 | X |  X  |   |       |
-|user item              |/api/users/{user}                                          | X |     | X |   X   |
+|user item              |/api/users/{user}                                          | X |     | X |       |
 |moves by user          |/api/users/{user}/moves                                    | X |  X  |   |       |
-|user's move            |/api/users/{user}/moves/{move}                             | X |     | X |   X   |
+|user's move            |/api/users/{user}/moves/{move}                             | X |     | X |       |
 |workouts by user       |/api/users/{user}/workouts                                 | X |  X  |   |       |
 |user's workout         |/api/users/{user}/workouts/{workout}                       | X |     | X |   X   |
 |moves in user's workout|/api/users/{user}/workouts/{workout}/moves                 | X |  X  |   |       |
