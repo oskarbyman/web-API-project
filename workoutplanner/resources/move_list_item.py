@@ -386,11 +386,19 @@ class MoveListItemItem(Resource):
                 description: Move list item deleted successfully
         """
         #if user and workout and position:
-        if user and workout:
-            user_id = User.query.filter_by(username=user).first().id
-            plan_id = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first().id
-            query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
+        if (workout!=None) and (user!=None) and (position!=None):
+            #  Id:s
+            creator = User.query.filter_by(username=user).first()
+            if not creator:
+                raise NotFound(f"No such user as {user} found")
+            creator_id = creator.id              
+            
+            plan = WorkoutPlan.query.filter_by(user_id=creator_id, name=workout).first()  
+            if not plan:
+                raise NotFound(f"No such workout as {workout} found")
+            plan_id = plan.id    
 
+            query_result = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
             if not query_result:
                 raise NotFound
             else:
