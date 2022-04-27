@@ -38,7 +38,7 @@ class api_test():
         self._post_to_uri("/api/users/", {"username": "testuser"})
         self._post_to_uri("/api/users/testuser/workouts/", {"name": "testworkout"})
         self._post_to_uri("/api/users/testuser/moves/", {"name": "testmove", "description": "A generic testmove"})
-        self._post_to_uri("/api/users/testuser/workouts/testworkout/moves/", {"move_name": "testmove", "repetitions": 0})
+        self._post_to_uri("/api/users/testuser/workouts/testworkout/moves/", {"move_name": "testmove", "move_creator": "testuser", "repetitions": 0})
 
     def api_suite_teardown(self):
         """
@@ -51,15 +51,15 @@ class api_test():
         """
         self._put_to_uri("/api/users/testuser/", {"username": "testuser"})
         self._put_to_uri("/api/users/testuser/workouts/testworkout/", {"name": "testworkout"})
-        self._put_to_uri("/api/users/testuser/moves/testmove", {"name": "testmove", "description": "A generic testmove"})
-        self._post_to_uri("/api/users/testuser/workouts/testworkout/moves/", {"move_name": "testmove", "repetitions": 0, "position": 0})
+        self._put_to_uri("/api/users/testuser/moves/testmove/", {"name": "testmove", "description": "A generic testmove"})
+        self._post_to_uri("/api/users/testuser/workouts/testworkout/moves/", {"move_name": "testmove", "move_creator": "testuser", "repetitions": 0, "position": 0})
         
     def api_test_teardown(self):
         """
         Test teardown for each individual test
         """
+        self._delete_from_uri("/api/users/testuser/workouts/testworkout/moves/0/")
         self._delete_from_uri("/api/users/testuser/workouts/testworkout/")
-        self._delete_from_uri("/api/users/testuser/workouts/testworkout/moves/0")
 
     #  Utilities
 
