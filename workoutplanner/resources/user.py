@@ -136,14 +136,14 @@ class UserItem(Resource):
         except ValidationError as e:
             raise BadRequest(description=str(e))
         
-        current_user = User.query.filter_by(username=user)
+        current_user = User.query.filter_by(username=user).first()
         if not current_user:
             raise NotFound
         current_user.username  = request.json["username"]
 
         db.session.commit()
         return Response(status=201, headers={
-            "Location": current_user.get_url()#url_for("api.useritem", user=user)
+            "Location": current_user.get_url()
         })
 
     @swag_from("/workoutplanner/doc/users/get_item.yml")

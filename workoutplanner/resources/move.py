@@ -177,7 +177,7 @@ class MoveItem(Resource):
                 #  Query the creator id for the move
                 creator_id = User.query.filter_by(username=user).first().id
                 #  Query the requested move
-                move = Move.query.filter_by(name=move, user_id=creator_id)
+                move = Move.query.filter_by(name=move, user_id=creator_id).first()
                 #  Change it's attributes
                 move.name  = request.json["name"]
                 move.description = request.json["description"]
