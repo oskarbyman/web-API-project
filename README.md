@@ -32,6 +32,7 @@ Remember to include all required documentation and HOWTOs, including how to crea
 ---
 #### Instructions for testing:
 1. Launch local dev server with above instructions
-2. Change directory to the web-API-project\tests with: `cd tests`
-3. Run tests with: `python api_test.py`
-4. Results are printed to log.txt in the tests folder and the terminal window
+2. Install python requests with: `pip install --upgrade requests robotframework`
+3. Change directory to the web-API-project\tests with: `cd tests`
+4. Run tests with: `python -m robot -L DEBUG:INFO ApiTests.robot`
+5. Results are exported into an html report file report.html, which links to the log.html file for testcase specific logs
