@@ -8,5 +8,6 @@
             "description": "The name of the workout plan",
             "type": "string"
         }
-    }
+    },
+    "additionalProperties": false
 }

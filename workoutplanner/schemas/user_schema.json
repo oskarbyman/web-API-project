@@ -8,5 +8,6 @@
             "description": "An unique username",
             "type": "string"
         }
-    }
+    },
+    "additionalProperties": false
 }

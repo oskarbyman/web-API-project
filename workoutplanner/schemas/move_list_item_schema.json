@@ -22,5 +22,6 @@
             "minimum": 0,
             "type": "integer"
         }
-    }
+    },
+    "additionalProperties": false
 }

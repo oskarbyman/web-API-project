@@ -12,5 +12,6 @@
             "description": "The description of the move",
             "type": "string"
         }
-    }
+    },
+    "additionalProperties": false
 }
