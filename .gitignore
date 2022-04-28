@@ -167,3 +167,4 @@ cython_debug/
 tests/report.html
 tests/log.html
 tests/output.xml
+.vscode/settings.json

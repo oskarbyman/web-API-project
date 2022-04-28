@@ -1,244 +1,475 @@
-"""
-Test script for the project api,
-uses the requests library to send requests to the different api URI:s
-
-Author: Oskar Byman
-"""
-import sys
 import json
-import logging
-from requests import get, post, put, delete, Response
+import os
+import pytest
+import tempfile
+from jsonschema import validate
 
-sys.path.append("..")
-from workoutplanner.utils import db, create_app
+from workoutplanner import create_app, db
+from workoutplanner.models import User, Move, WorkoutPlan, MoveListItem, populate_db_command
 
-class api_test():
-
-    """
-    Testing class that contains the needed parameters and methods for testing
-    """
-
-    def __init__(self, base_uri: str="http://127.0.0.1:5000") -> None:
-
-        self.base_uri = base_uri
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(logging.FileHandler("log.txt"))
-        self.logger.addHandler(logging.StreamHandler())
+@pytest.fixture(scope="function")
+def app():
+    db_fd, db_fname = tempfile.mkstemp()
+    config = {
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///" + db_fname,
+        "TESTING": True
+    }
+    
+    app = create_app(config)
+    
+    with app.app_context():
+        db.create_all()
+        _populate_db()
         
-        #  URIs
-        #  Both URIs that end in /moves point to a list that can be accessed with an index (move position in list)
+    yield app
 
-    def api_suite_setup(self):
-        """
-        Suite setup for the Api tests.
-        Populates the local server database with data
-        """
-        db.create_all(app=create_app())
-        self._post_to_uri("/api/users/", {"username": "testuser"})
-        self._post_to_uri("/api/users/testuser/workouts/", {"name": "testworkout"})
-        self._post_to_uri("/api/users/testuser/moves/", {"name": "testmove", "description": "A generic testmove"})
-        self._post_to_uri("/api/users/testuser/workouts/testworkout/moves/", {"move_name": "testmove", "move_creator": "testuser", "repetitions": 0})
+    os.close(db_fd)
+    os.unlink(db_fname)
 
-    def api_suite_teardown(self):
-        """
-        Suite teardown for the Api tests.
-        """
+@pytest.fixture(scope="function")
+def client(app):
+    return app.test_client()
 
-    def api_test_setup(self):
-        """
-        Test setup for each individual test
-        """
-        self._put_to_uri("/api/users/testuser/", {"username": "testuser"})
-        self._put_to_uri("/api/users/testuser/workouts/testworkout/", {"name": "testworkout"})
-        self._put_to_uri("/api/users/testuser/moves/testmove/", {"name": "testmove", "description": "A generic testmove"})
-        self._post_to_uri("/api/users/testuser/workouts/testworkout/moves/", {"move_name": "testmove", "move_creator": "testuser", "repetitions": 0, "position": 0})
+def _populate_db():
+    for i in range(1, 5):
+        user = User(username=f"testuser{i}")
+        db.session.add(user)
+
+    for i in range(1, 5):
+        move = Move(
+            name=f"testmove{i}", 
+            description=f"test description for testmove{i}", 
+            user=User.query.filter_by(username=f"testuser{i}").first()
+            )
+        db.session.add(move)
+
+    for i in range(1, 5):
+        workout = WorkoutPlan(
+            name=f"testworkout{i}", 
+            user=User.query.filter_by(username=f"testuser{i}").first()
+            )
+        workout.workout_moves.append(
+            MoveListItem(
+                move=Move.query.filter_by(name=f"testmove{i}").first(), repetitions=10
+                )
+            )
+        db.session.add(workout)
+
+    db.session.commit()
+
+def _get_user_json(name: str="testuser") -> dict:
+    """
+    Return a valid json for the User Resource
+
+    Args:
+        name (str): The username, has to be unique
+    Returns:
+        (dict): the user json
+    """
+    return {"username": name}
+
+def _get_move_json(name: str="testmove", desc: str="test description") -> dict:
+    """
+    Return a valid json for the Move Resource
+
+    Args:
+        name (str): The move name, has to be unique per user
+        desc (str): The description of the move, essentially telling what to do
+    Returns:
+        (dict): the move json
+    """
+    return {"name": name, "description": desc}
+
+def _get_workout_json(name: str="testworkout") -> dict:
+    """
+    Return a valid json for the Workout Resource
+
+    Args:
+        name (str): The workout name, has to be unique per user
+    Returns:
+        (dict): the workout json
+    """
+    return {"name": name}
+
+def _get_movelistitem_json(name: str="testmove", creator: str="testuser", reps: int=0, position: int=0) -> dict:
+    """
+    Return a valid json for the Move list item Resource
+
+    Args:
+        name (str): The move name, used together with the creator to link the correct move
+        creator (str): The creators name, used together with the name to link the correct move
+        reps (int): The repetitions of the move in the workout
+        position (int): The position of the move in the workout
+    Returns:
+        (dict): the move list item json
+    """
+    return {"move_name": name, "move_creator": creator, "repetitions": reps, "position": position}
+
+
+def _check_namespace(client, response: dict) -> None:
+    """
+    Tests that the workoutplanner namespace is defined in the response
+    """
+    namespace_href = response["@namespaces"]["workoutplanner"]["name"]
+    resp = client.get(namespace_href)
+    assert resp.status_code == 200
+
+def _check_control_get_method(ctrl: str, client, obj: dict) -> None:
+    """
+    Checks that the get method defined in the hypermedia controls works
+    """
+
+    href = obj["@controls"][ctrl]["href"]
+    resp = client.get(href)
+    assert resp.status_code == 200
+    
+def _check_control_delete_method(ctrl: str, client, obj: dict) -> None:
+    """
+    Chekcks that the delete method defined in the hypermedia controls works
+    """
+
+    href = obj["@controls"][ctrl]["href"]
+    method = obj["@controls"][ctrl]["method"].lower()
+    assert method == "delete"
+    resp = client.delete(href)
+    assert resp.status_code == 200
+    
+def _check_control_put_method(ctrl: str, client, obj: dict, test_body: dict) -> None:
+    """
+    Checks that the put method defined in the hypermedia controls works
+    """
+
+    ctrl_obj = obj["@controls"][ctrl]
+    href = ctrl_obj["href"]
+    method = ctrl_obj["method"].lower()
+    encoding = ctrl_obj["encoding"].lower()
+    schema = ctrl_obj["schema"]
+    assert method == "put"
+    assert encoding == "json"
+    validate(test_body, schema)
+    resp = client.put(href, json=test_body)
+    assert resp.status_code == 201
+    
+def _check_control_post_method(ctrl: str, client, obj: dict, test_body: dict) -> None:
+    """
+    """
+
+    ctrl_obj = obj["@controls"][ctrl]
+    href = ctrl_obj["href"]
+    method = ctrl_obj["method"].lower()
+    encoding = ctrl_obj["encoding"].lower()
+    schema = ctrl_obj["schema"]
+    assert method == "post"
+    assert encoding == "json"
+    validate(test_body, schema)
+    resp = client.post(href, json=test_body)
+    assert resp.status_code == 201
+
+class TestUserCollection(object):
+
+    RESOURCE_URL = "/api/users/"
+
+    def test_get(self, client):
+        response = client.get(self.RESOURCE_URL)
+        assert response.status_code == 200
+        response_body = json.loads(response.data)
+        _check_namespace(client, response_body)
+        _check_control_post_method("workoutplanner:add-user", client, response_body, _get_user_json())
+        assert len(response_body["items"]) == 4, "The database did not contain 4 items"
+        for item in response_body["items"]:
+            _check_control_get_method("self", client, item)
+
+    def test_post(self, client):
+        valid = _get_user_json()
+
+        # test with wrong content type
+        resp = client.post(self.RESOURCE_URL, data=valid)
+        assert resp.status_code == 415
+
+        # test with valid and see that it exists afterward
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + valid["username"] + "/")
+        resp = client.get(resp.headers["Location"])
+        assert resp.status_code == 200
+
+        # send same data again for 409
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 409
+
+        # add nickname field for 400
+        valid["nickname"] = "anakin"
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
+
+class TestUserItem(object):
+
+    RESOURCE_URL = "/api/users/testuser1/"
+    INVALID_URL = "/api/users/jiminy-cricket/"
+
+    def test_get(self, client):
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
+        response_body = json.loads(resp.data)
+        _check_namespace(client, response_body)
+        _check_control_get_method("profile", client, response_body)
+        _check_control_get_method("up", client, response_body)
+        _check_control_put_method("edit", client, response_body, _get_user_json(name="testuser12345"))
+        resp = client.get(self.INVALID_URL)
+        assert resp.status_code == 404
+
+    def test_put(self, client):
+        valid = _get_user_json()
+
+        # test with wrong content type
+        resp = client.put(self.RESOURCE_URL, data=valid)
+        assert resp.status_code == 415
+
+        resp = client.put(self.INVALID_URL, json=valid)
+        assert resp.status_code == 404
+
+        # add field for 400
+        valid["user_nickname"] = "anakin"
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        valid.pop("user_nickname")
+        assert resp.status_code == 400
+
+        # test a name change
+        valid["username"] = "testuser1_new"
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
         
-    def api_test_teardown(self):
-        """
-        Test teardown for each individual test
-        """
-        self._delete_from_uri("/api/users/testuser/workouts/testworkout/moves/0/")
-        self._delete_from_uri("/api/users/testuser/workouts/testworkout/")
+class TestMoveCollection(object):
 
-    #  Utilities
+    RESOURCE_URL = "/api/users/testuser1/moves/"
+    INVALID_URL ="/api/users/jiminy-cricket/moves/"
+    ALL_MOVES_URL = "/api/moves/"
 
-    def _get_from_uri(self, uri: str) -> Response:
-        full_uri = self.base_uri + uri
-        result = get(full_uri)
-        result.raise_for_status()
-        return result
+    def test_get(self, client):
+        response = client.get(self.RESOURCE_URL)
+        assert response.status_code == 200
+        response_body = json.loads(response.data)
+        _check_namespace(client, response_body)
+        _check_control_post_method("workoutplanner:add-move", client, response_body, _get_move_json())
+        assert len(response_body["items"]) == 1, f"The database did not contain 4 items"
+        for item in response_body["items"]:
+            _check_control_get_method("self", client, item)
 
-    def _post_to_uri(self, uri: str, data: dict) -> Response:
-        full_uri = self.base_uri + uri
-        result = post(full_uri, data=json.dumps(data), headers={"Content-Type": "application/json"})
-        result.raise_for_status()
-        return result
+        response = client.get(self.ALL_MOVES_URL)
+        assert response.status_code == 200
+        response_body = json.loads(response.data)
+        assert len(response_body["items"]) == 5, f"The database did not contain 4 items"
+        for item in response_body["items"]:
+            _check_control_get_method("self", client, item)
 
-    def _put_to_uri(self, uri: str, data: dict) -> Response:
-        full_uri = self.base_uri + uri
-        result = put(full_uri, data=json.dumps(data), headers={"Content-Type": "application/json"})
-        result.raise_for_status()
-        return result
+    def test_post(self, client):
+        valid = _get_move_json()
 
-    def _delete_from_uri(self, uri: str) -> Response:
-        full_uri = self.base_uri + uri
-        result = delete(full_uri)
-        result.raise_for_status()
-        return result
+        # test with wrong content type
+        resp = client.post(self.RESOURCE_URL, data=json.dumps(valid))
+        assert resp.status_code == 415
 
-    #  Test methods
+        # test with valid and see that it exists afterward
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + valid["name"] + "/")
+        resp = client.get(resp.headers["Location"])
+        assert resp.status_code == 200
 
-    def test_succesful_get(self, uri: str) -> None:
-        """Test get from uri
-        Steps:
-        GET from an URI
+        # send same data again for 409
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 409
 
-        PASS requirements:
-        All requests receive a status code of 200
-        """
-        self.logger.info(f"Getting from {uri}")
-        get_result = self._get_from_uri(uri)
-        self.logger.debug(f"GET response: {get_result.content}")
-        if not get_result.status_code == 200:
-            raise Exception(
-                f"Status code to get request was not 200, uri: {uri}"
-            )
+        # add type field for 400
+        valid["type"] = "jedi mind trick"
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
 
-    def test_succesful_post(self, uri: str, data: dict) -> None:
-        """Test post to uri
-        Steps:
-        POST to an URI
-        Check status code of response
+class TestMoveItem(object):
 
-        PASS requirements:
-        A correct request receives a status code of 200
-        """
-        #  POST event
-        self.logger.info(f"Posting to {uri}")
-        post_result = self._post_to_uri(uri, data)
-        self.logger.debug(f"Posted: {data}, Post response: {post_result.content}")
-        if not post_result.status_code == 200:
-            raise Exception(
-                f"Status code to post request was not 200, uri: {uri}"
-            )
+    RESOURCE_URL = "/api/users/testuser1/moves/testmove1/"
+    INVALID_URL = "/api/users/jiminy-cricket/moves/testmove1/"
 
-    def test_unsuccesful_post(self, uri: str, data: dict) -> None:
-        """Test post to uri
-        Steps:
-        POST to an URI
-        Check status code of response
+    def test_get(self, client):
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
+        response_body = json.loads(resp.data)
+        _check_namespace(client, response_body)
+        _check_control_get_method("profile", client, response_body)
+        _check_control_get_method("up", client, response_body)
+        _check_control_get_method("collection", client, response_body)
+        _check_control_put_method("edit", client, response_body, _get_move_json(name="testmove123"))
+        resp = client.get(self.INVALID_URL)
+        assert resp.status_code == 404
 
-        PASS requirements:
-        An incorrect request receives a status code of not 200
-        """
-        self.logger.info(f"Posting to {uri}")
-        post_result = self._post_to_uri(uri, data)
-        self.logger.debug(f"Posted: {data}, Post response: {post_result.content}")
-        if post_result.status_code == 200:
-            raise Exception(
-                f"Status code to post request should not be 200, uri: {uri}"
-            )
+    def test_put(self, client):
+        valid = _get_move_json()
 
-    def test_succesful_put(self, uri: str, data: dict) -> None:
-        """Test put to uri
-        Steps:
-        PUT to an URI
-        Check status code of response
+        # test with wrong content type
+        resp = client.put(self.RESOURCE_URL, data=valid)
+        assert resp.status_code == 415
+        # test invalid url
+        resp = client.put(self.INVALID_URL, json=valid)
+        assert resp.status_code == 404
+        # test valid url
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
 
-        PASS requirements:
-        A correct request receives a status code of 200
-        """
-        #  POST event
-        self.logger.info(f"Posting to {uri}")
-        put_result = self._put_to_uri(uri, data)
-        self.logger.debug(f"Put: {data}, Put response: {put_result.content}")
-        if not put_result.status_code == 200:
-            raise Exception(
-                f"Status code to put request was not 200, uri: {uri}"
-            )
+        # test the addtion of a field for 400
+        valid["is_move_jedi_mind_trick"] = True
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
 
-    def test_unsuccesful_put(self, uri: str, data: dict) -> None:
-        """Test put to uri
-        Steps:
-        PUT from an URI
-        Check status code of response
+class TestWorkoutItem(object):
 
-        PASS requirements:
-        An incorrect request should receive a status code of not 200
-        """
-        self.logger.info(f"Putting to {uri}")
-        put_result = self._put_to_uri(uri, data)
-        self.logger.debug(f"Put data: {data}, Put response: {put_result.content}")
-        if put_result.status_code == 200:
-            raise Exception(
-                f"Status code to put request should not be 200, uri: {uri}"
-            )
+    RESOURCE_URL = "/api/users/testuser1/workouts/testworkout1/"
+    INVALID_URL = "/api/users/jiminy-cricket/workouts/testworkout1/"
 
-    def test_succesful_delete(self, uri:str, data: dict) -> None:
-        """Test delete from uri
-        Steps:
-        PUT from an URI
+    def test_get(self, client):
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
+        response_body = json.loads(resp.data)
+        _check_namespace(client, response_body)
+        _check_control_get_method("profile", client, response_body)
+        _check_control_get_method("up", client, response_body)
+        _check_control_get_method("collection", client, response_body)
+        _check_control_put_method("edit", client, response_body, _get_workout_json(name="testmove123"))
+        resp = client.get(self.INVALID_URL)
+        assert resp.status_code == 404
 
-        PASS requirements:
-        All correct requests receive a status code of 200
-        All incorrect requests receive a status code of 200
-        """
-        self.logger.info(f"Deleting from {uri}")
-        delete_result = self._delete_from_uri(uri)
-        self.logger.debug(f"DELETE response: {delete_result.content}")
-        if not delete_result.status_code == 200:
-            raise Exception(
-                f"Status code to put request was not 200, uri: {uri}"
-            )
+    def test_put(self, client):
+        valid = _get_workout_json()
 
-    def test_unsuccesful_delete(self, uri:str, data: dict) -> None:
-        """Test delete from uri
-        Steps:
-        PUT from an URI
+        # test with wrong content type
+        resp = client.put(self.RESOURCE_URL, data=valid)
+        assert resp.status_code == 415
+        # test invalid url
+        resp = client.put(self.INVALID_URL, json=valid)
+        assert resp.status_code == 404
+        # test valid url
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
 
-        PASS requirements:
-        All correct requests receive a status code of 200
-        All incorrect requests receive a status code of 200
-        """
-        self.logger.info(f"Deleting from {uri}")
-        delete_result = self._delete_from_uri(uri)
-        self.logger.debug(f"DELETE response: {delete_result.content}")
-        if delete_result.status_code == 200:
-            raise Exception(
-                f"Status code to put request should not be 200, uri: {uri}"
-            )
+        # test the addtion of a field for 400
+        valid["is_move_jedi_mind_trick"] = True
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
 
-    def test_resource_creation(self, uri: str, data: dict) -> None:
-        """Test resource creation
+class TestWorkoutCollection(object):
 
-        Steps:
-        POST a new object to URI
-        GET the respective object from the response URI
+    RESOURCE_URL = "/api/users/testuser1/workouts/"
+    INVALID_URL ="/api/users/jiminy-cricket/workouts/"
+    ALL_WORKOUTS_URL = "/api/workouts/"
 
-        PASS requirements:
-        All requests receive a status code of 200
-        """
-        self.logger.debug(f"Posting {data} to {uri}")
-        post_result = self._post_to_uri(uri, data)
-        self.logger.debug(f"POST response: {post_result.text}")
-        if not post_result.status_code == 200:
-            raise Exception(
-                f"Status code for POST was not 200, URI: {uri}, data: {data}"
-            )
-        self.logger.debug(f"Getting from URI: {uri}")
-        get_result = self._get_from_uri(uri)
-        self.logger.debug(f"GET result: {get_result.text}")
-        if not get_result.status_code == 200:
-            raise Exception(
-                f"Status code for GET was not 200, URI: {uri}, data: {data}"
-            )
-        if not data in get_result.text: 
-            raise Exception(
-                f"Could not find the POSTed data from response, URI: {uri}, data: {data}"
-            )
+    def test_get(self, client):
+        response = client.get(self.RESOURCE_URL)
+        assert response.status_code == 200
+        response_body = json.loads(response.data)
+        _check_namespace(client, response_body)
+        _check_control_post_method("workoutplanner:add-workout", client, response_body, _get_workout_json())
+        assert len(response_body["items"]) == 1, "The database did not contain a workout for testuser1"
+        for item in response_body["items"]:
+            _check_control_get_method("self", client, item)
 
+        response = client.get(self.ALL_WORKOUTS_URL)
+        assert response.status_code == 200
+        response_body = json.loads(response.data)
+        assert len(response_body["items"]) == 5, f"The database did not contain all 5 workouts"
+        for item in response_body["items"]:
+            _check_control_get_method("self", client, item)
 
+    def test_post(self, client):
+        valid = _get_workout_json()
 
-if __name__ == "__main__":
-    pass
+        # test with wrong content type
+        resp = client.post(self.RESOURCE_URL, data=json.dumps(valid))
+        assert resp.status_code == 415
+
+        # test with valid and see that it exists afterward
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + valid["name"] + "/"), "The location header was not correct"
+        resp = client.get(resp.headers["Location"])
+        assert resp.status_code == 200
+
+        # send same data again for 409
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 409
+
+        # add type field for 400
+        valid["type"] = "jedi mind trick training regime"
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
+
+class TestMoveListItemItem(object):
+
+    RESOURCE_URL = "/api/users/testuser1/workouts/testworkout1/moves/0/"
+    INVALID_URL = "/api/users/jiminy-cricket/workouts/testworkout1/move/0/"
+    
+    def test_get(self, client):
+        resp = client.get(self.RESOURCE_URL)
+        assert resp.status_code == 200
+        response_body = json.loads(resp.data)
+        _check_namespace(client, response_body)
+        _check_control_get_method("profile", client, response_body)
+        _check_control_get_method("up", client, response_body)
+        _check_control_put_method("edit", client, response_body, _get_movelistitem_json("testmove1", "testuser1", 15))
+        _check_control_delete_method("workoutplanner:delete", client, response_body)
+        resp = client.get(self.INVALID_URL)
+        assert resp.status_code == 404
+
+    def test_put(self, client):
+        valid = _get_movelistitem_json("testmove1", "testuser1", 15)
+
+        # test with wrong content type
+        resp = client.put(self.RESOURCE_URL, data=valid)
+        assert resp.status_code == 415
+        # test invalid url
+        resp = client.put(self.INVALID_URL, json=valid)
+        assert resp.status_code == 404
+        # test valid url
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+
+        # test the addtion of a field for 400
+        valid["is_move_jedi_mind_trick"] = True
+        resp = client.put(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
+
+class TestMoveListItemCollection(object):
+
+    RESOURCE_URL = "/api/users/testuser1/workouts/testworkout1/moves/"
+    INVALID_URL ="/api/users/jiminy-cricket/workouts/testworkout1/moves/"
+
+    def test_get(self, client):
+        response = client.get(self.RESOURCE_URL)
+        assert response.status_code == 200
+        response_body = json.loads(response.data)
+        _check_namespace(client, response_body)
+        _check_control_post_method("workoutplanner:add-movelistitem", client, response_body, _get_movelistitem_json("testmove1", "testuser1"))
+        assert len(response_body["items"]) == 1, "The database did not contain a workout for testuser1"
+        for item in response_body["items"]:
+            _check_control_get_method("self", client, item)
+
+    def test_post(self, client):
+        valid = _get_movelistitem_json("testmove1", "testuser1", 15, 0)
+
+        # test with wrong content type
+        resp = client.post(self.RESOURCE_URL, data=json.dumps(valid))
+        assert resp.status_code == 415
+
+        # test with valid and see that it exists afterward
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+        assert resp.headers["Location"].endswith(self.RESOURCE_URL + str(valid["position"]) + "/"), "The location header was not correct"
+        resp = client.get(resp.headers["Location"])
+        assert resp.status_code == 200
+
+        # send same data again to add the same move twice to the workout, should result in 201
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 201
+
+        # add type field for 400
+        valid["type"] = "jedi mind trick training regime"
+        resp = client.post(self.RESOURCE_URL, json=valid)
+        assert resp.status_code == 400
