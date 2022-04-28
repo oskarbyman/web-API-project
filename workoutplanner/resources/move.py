@@ -48,14 +48,14 @@ class MoveCollection(Resource):
                             example: /api/users/Noob/moves/Plank
         """
         try:
-            if request.json == None:
+            if not request.content_type == "application/json":
                 raise UnsupportedMediaType
             #  Check if user is present in the path
             if user:
                 try:
                     validate(request.json, Move.json_schema())
-                except ValidationError as e:
-                    raise BadRequest(description=str(e))
+                except ValidationError as err:
+                    raise BadRequest(description=str(err))
 
                 name  = request.json["name"]
                 user_id = User.query.filter_by(username=user).first().id
@@ -72,7 +72,7 @@ class MoveCollection(Resource):
             return Response(status=201, headers={
                 "Location": move.get_url()#url_for("api.moveitem", user=user, move=name)
             })
-            
+
         except KeyError:
             db.session.rollback()
             raise BadRequest
@@ -104,8 +104,7 @@ class MoveCollection(Resource):
                             creator: ProAthlete35
                             description: Walk to the nearest fridge and open it
         """
-        moves = []
-        #  Check if user was present in the URI. 
+        #  Check if user was present in the URI.
         #  If so, query only the moves by that user.
         #  Else query all moves in the database.
         if user:
@@ -114,7 +113,7 @@ class MoveCollection(Resource):
             query = Move.query.filter_by(user_id=user_id).all()
         else:
             query = Move.query.all()
-        
+
         body = MoveCollectionBuilder(items=[])
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
@@ -131,9 +130,8 @@ class MoveCollection(Resource):
             item = MoveBuilder(move.serialize(short_form=True))
             item.add_control("self", move.get_url())
             body["items"].append(item)
-        
+
         return Response(json.dumps(body), 200, mimetype=MASON)
-        
 
 class MoveItem(Resource):
     """
@@ -166,16 +164,19 @@ class MoveItem(Resource):
             #  Check if PUTting to a specific users move.
             #  Else don't allow PUTting.
             if user and move:
-                if request.json == None:
+                if not request.content_type == "application/json":
                     raise UnsupportedMediaType
 
                 try:
                     validate(request.json, Move.json_schema())
-                except ValidationError as e:
-                    raise BadRequest(description=str(e))
+                except ValidationError as err:
+                    raise BadRequest(description=str(err))
 
                 #  Query the creator id for the move
-                creator_id = User.query.filter_by(username=user).first().id
+                creator_obj = User.query.filter_by(username=user).first()
+                if not creator_obj:
+                    raise NotFound
+                creator_id = creator_obj.id
                 #  Query the requested move
                 move = Move.query.filter_by(name=move, user_id=creator_id).first()
                 #  Change it's attributes
@@ -218,12 +219,15 @@ class MoveItem(Resource):
         """
         if user and move:
             #  Get user id based on the user given by the URI
-            user_id = User.query.filter_by(username=user).first().id
+            user_obj = User.query.filter_by(username=user).first()
+            if not user_obj:
+                raise NotFound
+            user_id = user_obj.id
             #  Filter the move based on the previous user id and the moves name
             query = Move.query.filter_by(name=move, user_id=user_id).first()
         else:
             raise MethodNotAllowed
-     
+
         body = MoveBuilder(query.serialize())
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
@@ -233,7 +237,7 @@ class MoveItem(Resource):
         body.add_control_edit_move(query)
         #body.add_control_delete_move(query)
         return Response(json.dumps(body), 200, mimetype=MASON)
-          
+
 class MoveCollectionBuilder(MasonBuilder):
 
     def add_control_add_move(self, user):
@@ -243,7 +247,6 @@ class MoveCollectionBuilder(MasonBuilder):
             href=user.get_url() + "moves/",
             schema=Move.json_schema()
         )
-          
 
 class MoveBuilder(MasonBuilder):
 
@@ -253,7 +256,7 @@ class MoveBuilder(MasonBuilder):
             title="Delete this move",
             href=obj.get_url()
         )
-    
+
     def add_control_edit_move(self, obj):
         self.add_control_put(
             ctrl_name="edit",

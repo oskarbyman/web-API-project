@@ -46,12 +46,12 @@ class UserCollection(Resource):
             '409':
                 description: User already exists
         """
-        if request.json == None:
+        if not request.content_type == "application/json":
             raise UnsupportedMediaType
         try:
             validate(request.json, User.json_schema())
-        except ValidationError as e:
-            raise BadRequest(description=str(e))
+        except ValidationError as err:
+            raise BadRequest(description=str(err))
 
         username  = request.json["username"]
         user = User(username=username)
@@ -60,16 +60,12 @@ class UserCollection(Resource):
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
-            raise Conflict(
-                "User already exists",
-                409
-            )
-            return Response("User already exists", 409)
+            raise Conflict
 
         return Response(status=201, headers={
             "Location": user.get_url()#url_for("api.useritem", user=user)
         })
-        
+
     @swag_from("/workoutplanner/doc/users/get_collection.yml")
     def get(self) -> tuple[list, int]:
         """
@@ -88,19 +84,18 @@ class UserCollection(Resource):
                         -   username: ProAthlete35
         """
 
-            
         body = UserCollectionBuilder(items=[])
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
         body.add_control("profile", href=USER_COLLECTION_PROFILE_URL)
         body.add_control("up", href="/api/", title="Up")
         body.add_control_add_user()
-        
+
         for user in User.query.all():
             item = UserBuilder(user.serialize())
             item.add_control("self", user.get_url())
             body["items"].append(item)
-        
+
         return Response(json.dumps(body), 200, mimetype=MASON)
 
 
@@ -128,14 +123,14 @@ class UserItem(Resource):
                             type: string
                             example: /api/users/Noob
         """
-        if request.json == None:
+        if not request.content_type == "application/json":
             raise UnsupportedMediaType
 
         try:
             validate(request.json, User.json_schema())
-        except ValidationError as e:
-            raise BadRequest(description=str(e))
-        
+        except ValidationError as err:
+            raise BadRequest(description=str(err))
+
         current_user = User.query.filter_by(username=user).first()
         if not current_user:
             raise NotFound
@@ -167,7 +162,7 @@ class UserItem(Resource):
         if not user_obj:
             raise NotFound
         result = user_obj.username
-        
+
         body = UserBuilder(user_obj.serialize())
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
@@ -178,7 +173,6 @@ class UserItem(Resource):
         body.add_control_add_move(user_obj)
         body.add_control_add_workout(user_obj)
         body.add_control_edit_user(user_obj)
-        #body.add_control_delete_user(user_obj)
         return Response(json.dumps(body), 200, mimetype=MASON)
 
 class UserCollectionBuilder(MasonBuilder):
@@ -202,7 +196,7 @@ class UserBuilder(MasonBuilder):
             method="GET",
             title="Get all moves of this user"
         )
-        
+
     def add_control_get_all_workouts(self, user):
         self.add_control(
             ctrl_name="workoutplanner:workouts-by",
@@ -217,7 +211,7 @@ class UserBuilder(MasonBuilder):
             title="Delete this user",
             href=user.get_url()
         )
-    
+
     def add_control_add_move(self, user):
         self.add_control_post(
             ctrl_name="workoutplanner:add-move",
@@ -225,7 +219,7 @@ class UserBuilder(MasonBuilder):
             href=user.get_url() + "moves/",
             schema=Move.json_schema()
         )
-        
+
     def add_control_add_workout(self, user):
         self.add_control_post(
             ctrl_name="workoutplanner:add-workout",
@@ -233,7 +227,7 @@ class UserBuilder(MasonBuilder):
             href=user.get_url() + "workouts/",
             schema=WorkoutPlan.json_schema()
         )
-    
+
     def add_control_edit_user(self, user):
         from flask import current_app
     

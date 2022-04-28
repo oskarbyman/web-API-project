@@ -37,7 +37,7 @@ class WorkoutPlanCollection(Resource):
         description: "Allows POST to the following URI:    /api/users/{user}/workouts, NOT from /api/workouts"
         parameters:
         - $ref: '#/components/parameters/user'
-        - $ref: '#/components/parameters/workoutitem'        
+        - $ref: '#/components/parameters/workoutitem'
         responses:
             '201':
                 description: URI of the new plan
@@ -54,16 +54,20 @@ class WorkoutPlanCollection(Resource):
             if not user:
                 raise MethodNotAllowed
             else:
-                if request.json == None:
+                
+                if not request.content_type == "application/json":
                     raise UnsupportedMediaType
 
                 try:
                     validate(request.json, WorkoutPlan.json_schema())
                 except ValidationError as e:
                     raise BadRequest(description=str(e))
-                
+
                 name  = request.json["name"]
-                user_id = User.query.filter_by(username=user).first().id
+                user_obj = User.query.filter_by(username=user).first()
+                if not user_obj:
+                    raise NotFound
+                user_id = user_obj.id
 
                 plan = WorkoutPlan(name=name, user_id=user_id)
 
@@ -78,10 +82,7 @@ class WorkoutPlanCollection(Resource):
             raise BadRequest
         except IntegrityError:
             db.session.rollback()
-            raise Conflict(
-                "Workout plan already exists",
-                409
-            )
+            raise Conflict
 
     @swag_from("/workoutplanner/doc/workouts/get_collection.yml")
     def get(self, user: str=None) -> list:
@@ -90,7 +91,7 @@ class WorkoutPlanCollection(Resource):
         ---
         description: "Allows GET from the following URIs: /api/users/{user}/workouts and /api/workouts/"
         parameters:
-        - $ref: '#/components/parameters/username'   
+        - $ref: '#/components/parameters/username'
         responses:
             '200':
                 description: List of workout plans returned successfully
@@ -104,15 +105,16 @@ class WorkoutPlanCollection(Resource):
                         -   name: Max Suffering
                             creator: ProAthlete35
         """
-        plans = []
         #   If user is specified only gets workouts made by the user, else gets them all
         if user:
             user_obj = User.query.filter_by(username=user).first()
+            if not user_obj:
+                raise NotFound
             user_id = user_obj.id
             query = WorkoutPlan.query.filter_by(user_id=user_id).all()
         else:
             query = WorkoutPlan.query.all()
-        
+
         body = WorkoutPlanCollectionBuilder(items=[])
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
@@ -123,12 +125,12 @@ class WorkoutPlanCollection(Resource):
             body.add_control_add_workout(user_obj)
         else:
             body.add_control("up", href=url_for("api_entry"), title="Up")
-        
+
         for workout in query:
             item = WorkoutPlanBuilder(workout.serialize(short_form=True))
             item.add_control("self", workout.get_url())
             body["items"].append(item)
-        
+
         return Response(json.dumps(body), 200, mimetype=MASON)
 
 class WorkoutPlanItem(Resource):
@@ -146,14 +148,14 @@ class WorkoutPlanItem(Resource):
         ---
         description: "Allows PUT to the following URI:  /api/users/{user}/workouts/{workout}"
         parameters:
-        - $ref: '#/components/parameters/user' 
+        - $ref: '#/components/parameters/user'
         - $ref: '#/components/parameters/workout'
-        - $ref: '#/components/parameters/workoutitem'   
+        - $ref: '#/components/parameters/workoutitem'
         responses:
             '201':
                 description: Workout replaced successfully
                 headers:
-                    Location: 
+                    Location:
                         description: URI of the new workout
                         schema:
                             type: string
@@ -161,14 +163,17 @@ class WorkoutPlanItem(Resource):
         """
         try:
             if workout and user:
-                if request.json == None:
+                if not request.content_type == "application/json":
                     raise UnsupportedMediaType
                 try:
                     validate(request.json, WorkoutPlan.json_schema())
                 except ValidationError as e:
                     raise BadRequest(description=str(e))
 
-                user_id = User.query.filter_by(username=user).first().id
+                user_obj = User.query.filter_by(username=user).first()
+                if not user_obj:
+                    raise NotFound
+                user_id = user_obj.id
                 current_workout = WorkoutPlan.query.filter_by(user_id=user_id, name=workout).first()
                 if not current_workout:
                     raise NotFound
@@ -183,8 +188,7 @@ class WorkoutPlanItem(Resource):
         except KeyError:
             db.session.rollback()
             raise BadRequest
-    
-    
+
     @swag_from("/workoutplanner/doc/workouts/get_item.yml")
     def get(self, workout: str, user: str=None) -> tuple[dict, int]:
         """
@@ -193,7 +197,7 @@ class WorkoutPlanItem(Resource):
         description: "Allows GET from the following URIs: /api/users/{user}/workouts/{workout} and /api/workouts/{workout}"
         parameters:
         - $ref: '#/components/parameters/username'
-        - $ref: '#/components/parameters/workout'         
+        - $ref: '#/components/parameters/workout'
         responses:
             '200':
                 description: Workout plan returned successfully
@@ -205,11 +209,15 @@ class WorkoutPlanItem(Resource):
                         -   name: Light Exercise
                             creator: Noob
         """
- 
+
         if user:
             user_obj = User.query.filter_by(username=user).first()
+            if not user_obj:
+                raise NotFound
             user_id = user_obj.id
             query_result = WorkoutPlan.query.filter_by(name=workout, user_id=user_id).first()
+            if not query_result:
+                raise NotFound
         else:
             query_result = WorkoutPlan.query.filter_by(name=workout).first()
             if not query_result:
@@ -217,7 +225,7 @@ class WorkoutPlanItem(Resource):
             user_id = query_result.user_id
         if not query_result:
             raise NotFound
-        
+
         body = WorkoutPlanBuilder(query_result.serialize())
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
@@ -236,8 +244,8 @@ class WorkoutPlanItem(Resource):
         ---
         description: "Obviously should require the user to be authenticated, but auth is not implemented yet. Allows DELETE of the following URIs: /api/users/{user}/workouts/{workout} and /api/workouts/{workout}"
         parameters:
-        - $ref: '#/components/parameters/user' 
-        - $ref: '#/components/parameters/workout'         
+        - $ref: '#/components/parameters/user'
+        - $ref: '#/components/parameters/workout'
         responses:
             '200':
                 description: Workout plan deleted successfully
@@ -285,7 +293,7 @@ class WorkoutPlanBuilder(MasonBuilder):
             title="Delete this workout",
             href=obj.get_url()
         )
-    
+
     def add_control_add_move_list_item(self, obj):
         self.add_control_post(
             ctrl_name="workoutplanner:add-movelistitem",
@@ -293,7 +301,7 @@ class WorkoutPlanBuilder(MasonBuilder):
             href=obj.get_url() + "moves/",
             schema=MoveListItem.json_schema()
         )
-    
+
     def add_control_edit_workout_plan(self, obj):
         self.add_control_put(
             ctrl_name="edit",

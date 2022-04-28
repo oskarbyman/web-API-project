@@ -1,4 +1,4 @@
-from flask import Response, request, url_for
+from flask import Response, request
 from flask_restful import Resource
 from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed
@@ -50,14 +50,14 @@ class MoveListItemCollection(Resource):
                 description: Movelist item already exists
         """
         try:
-            if request.json == None:
+            if not request.content_type == "application/json":
                 raise UnsupportedMediaType
             #  If the target URI is a move in a users workout uses the move list item wrapper model
             if workout and user:
                 try:
                     validate(request.json, MoveListItem.json_schema())
-                except ValidationError as e:
-                    raise BadRequest(description=str(e))
+                except ValidationError as err:
+                    raise BadRequest(description=str(err))
                 #  Get link ids to link the correct move and plan to the wrapper
                 creator = User.query.filter_by(username=user).first()
                 if not creator:
@@ -129,10 +129,7 @@ class MoveListItemCollection(Resource):
             raise BadRequest
         except IntegrityError:
             db.session.rollback()
-            raise Conflict(
-                409,
-                "Move already exists"
-            )
+            raise Conflict
 
     @swag_from("/workoutplanner/doc/movelistitems/get_collection.yml")
     def get(self, workout: str, user: str=None) -> tuple[list, int]:
@@ -228,36 +225,38 @@ class MoveListItemItem(Resource):
                 description: Movelist already exists
         """
 
+        if not request.content_type == "application/json":
+            raise UnsupportedMediaType
+
         try:
             validate(request.json, MoveListItem.json_schema())
         except ValidationError as e:
             raise BadRequest(description=str(e))
+
         try:
-            if request.json == None:
-                raise UnsupportedMediaType
             #  If the target URI is a move in a users workout uses the move list item wrapper model
-            if (workout!=None) and (user!=None) and (position!=None):
+            if workout is not None and user is not None and position is not None:
                 #  Id:s
                 creator = User.query.filter_by(username=user).first()
                 if not creator:
                     raise NotFound(f"No such user as {user} found")
-                creator_id = creator.id              
-                
+                creator_id = creator.id
+
                 plan = WorkoutPlan.query.filter_by(user_id=creator_id, name=workout).first()  
                 if not plan:
                     raise NotFound(f"No such workout as {workout} found")
-                plan_id = plan.id    
-                
+                plan_id = plan.id
+
                 move_creator = User.query.filter_by(username=request.json["move_creator"]).first()
                 if not move_creator:
                     raise NotFound(f"No such user as {move_creator} found")
-                   
+
                 move = Move.query.filter_by(name=request.json["move_name"], user_id=move_creator.id).first()
                 if not move:
                     move_name = request.json["move_name"]
                     raise NotFound(f"No such move as {move_name} found")
                 move_id = move.id
-                
+
                 #  Get the current Move list item object
                 move_list_item = MoveListItem.query.filter_by(plan_id=plan_id, position=position).first()
                 if not move_list_item:
@@ -272,9 +271,9 @@ class MoveListItemItem(Resource):
                         #  Remove moveitem from old position
                         for c_move in current_moves:
                             c_move.position -= 1
-                        
+
                         #  Add move to new position
-                        
+
                         current_moves = MoveListItem.query.filter((MoveListItem.plan_id == plan_id) & (MoveListItem.position >= new_position)).all()
                         #  Figure out the last position
                         last_position = 0
@@ -288,7 +287,7 @@ class MoveListItemItem(Resource):
                         #  with a position equal or larger than the on in the request.
                         #  Returns an empty list if the position does not exist
                         #  Increments the current positions with one to enable inserting the new position
-                        
+
                         for current_move in current_moves:
                             current_move.position += 1
                 else:
@@ -300,9 +299,7 @@ class MoveListItemItem(Resource):
                     new_repetitions = request.json["repetitions"]
                 else:
                     new_repetitions = None
-                    
-                
-                
+
                 print(new_position)
                 print(move_list_item.position)
                 #  Change the values of the requested move list object
@@ -317,14 +314,13 @@ class MoveListItemItem(Resource):
             raise BadRequest(e)
         except IntegrityError:
             db.session.rollback()
-            raise Conflict("Move already exists")
+            raise Conflict
         else:
             db.session.commit()
             #return Response(url_for(move_list_item), status=200)
             return Response(status=201, headers={
                 "Location": move_list_item.get_url()#url_for("api.movelistitemitem", user=user, workout=workout, position=new_position)
             })
-
 
     @swag_from("/workoutplanner/doc/movelistitems/get_item.yml")
     def get(self, workout: str, position: int, user: str=None) -> tuple[dict, int]:
@@ -358,7 +354,7 @@ class MoveListItemItem(Resource):
             raise MethodNotAllowed
         if not query_result:
             raise NotFound(f"No such move exists")
-        
+
         body = MoveListItemBuilder(query_result.serialize())
         body.add_namespace("workoutplanner", LINK_RELATIONS_URL)
         body.add_control("self", href=request.path)
@@ -369,8 +365,6 @@ class MoveListItemItem(Resource):
         body.add_control_edit_movelist_item(query_result)
         body.add_control_delete_movelist_item(query_result)
         return Response(json.dumps(body), 200, mimetype=MASON)
-        
-        return result, 200
 
     def delete(self, user: str, workout: str, position: int) -> Response:
         """
@@ -392,7 +386,7 @@ class MoveListItemItem(Resource):
             if not creator:
                 raise NotFound(f"No such user as {user} found")
             creator_id = creator.id              
-            
+
             plan = WorkoutPlan.query.filter_by(user_id=creator_id, name=workout).first()  
             if not plan:
                 raise NotFound(f"No such workout as {workout} found")
@@ -411,7 +405,6 @@ class MoveListItemItem(Resource):
         else:
             raise MethodNotAllowed
 
-
 class MoveListItemCollectionBuilder(MasonBuilder):
 
     def add_control_add_move_list_item(self, plan):
@@ -422,7 +415,6 @@ class MoveListItemCollectionBuilder(MasonBuilder):
             schema=MoveListItem.json_schema()
         )
 
-
 class MoveListItemBuilder(MasonBuilder):
 
     def add_control_get_move(self, obj):
@@ -432,7 +424,7 @@ class MoveListItemBuilder(MasonBuilder):
             method="GET",
             title="Get the move of the movelist item"
         )
-        
+
     def add_control_get_workout_plan(self, obj):
         self.add_control(
             ctrl_name="workoutplanner:workout",
@@ -447,7 +439,7 @@ class MoveListItemBuilder(MasonBuilder):
             title="Delete this move list item",
             href=obj.get_url()
         )
-    
+
     def add_control_edit_movelist_item(self, obj):
         self.add_control_put(
             ctrl_name="edit",
