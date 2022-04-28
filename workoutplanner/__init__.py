@@ -39,9 +39,9 @@ def create_app(test_config=None):
     
     from . import api as api_
     from . import models
-    api = api_.make_api(app)
 
     app.register_blueprint(api_.api_bp)
+    api = api_.make_api(app)
 
     # Register cli commands to create and populate db
     app.cli.add_command(models.initialize_db_command)
