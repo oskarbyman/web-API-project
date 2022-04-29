@@ -4,14 +4,31 @@ SERVER_URL = "http://localhost:5000"
 JSON = "application/json"
 MASON = "application/vnd.mason+json"
 
+def check_response(resp):
+    if resp.ok:
+        return True
+    if resp.status_code == 400:
+        print("Error: Bad request (Something went wrong, you shouldn't see this!)")
+    if resp.status_code == 404:
+        print("Error: Resource not found")
+    if resp.status_code == 405:
+        print("Error: Method not allowed (Something went wrong, you shouldn't see this!)")
+    if resp.status_code == 409:
+        print("Error: Resource already exists")
+    if resp.status_code == 415:
+        print("Error: Unsupported media type (Something went wrong, you shouldn't see this!)")
+    return False
+
+
 def get_body(s, href):
     #with requests.Session() as s:
     resp = s.get(SERVER_URL + href)
+    if not check_response(resp):
+        return None
     body = resp.json()
     return body
 
 def post_item(s, control):
-    #print(control)
     href = control["href"]
     headers={
         'Content-type':'application/json', 
@@ -19,20 +36,18 @@ def post_item(s, control):
     }
 
     schema = control["schema"]
-    #print(control["schema"])
-    properties = fill_schema(schema)   #control["schema"]["properties"]
-    #print(properties)
+    properties = fill_schema(schema) 
     resp = s.post(SERVER_URL + href, json=properties, headers=headers)
-    #print(f"response: {resp.reason}")
+
+    if not check_response(resp):
+        return href
+
     if "Location" in resp.headers:
-        #print(resp.headers["Location"])
         href = resp.headers["Location"]
-    #print("#########")
+
     return href
 
-
 def put_item(s, control):
-    #print(control)
     href = control["href"]
     headers={
         'Content-type':'application/json', 
@@ -40,25 +55,25 @@ def put_item(s, control):
     }
 
     schema = control["schema"]
-    #print(control["schema"])
-    properties = fill_schema(schema)   #control["schema"]["properties"]
-    #print(properties)
+    properties = fill_schema(schema)
     resp = s.put(SERVER_URL + href, json=properties, headers=headers)
-    #print(f"response: {resp.reason}")
+
+    if not check_response(resp):
+        return href
+
     if "Location" in resp.headers:
-        #print(resp.headers["Location"])
         href = resp.headers["Location"]
-    #print("#########")
+
     return href
 
 def delete_item(s, control, next_href):
     print(control)
     resp = s.delete(SERVER_URL + control["href"])
 
-    if resp.status_code == 200:
-        return next_href
-    else:
+    if not check_response(resp):
         return control["href"]
+    return next_href
+
 
 
 def fill_schema(json):

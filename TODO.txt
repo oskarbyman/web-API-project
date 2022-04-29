@@ -25,11 +25,10 @@ jos korjauksissa joku menny pieleen voi pisteet olla vähemmän.
  > Hypermedia Design and implementation: 3/9
   -6.0: Wiki täyttämättä
 
-> D5: 13/35
+> D5: 14/35
  > Client Description: 0/6
   -6.0: Wiki täyttämättä
- > Client implementation: 8/14
-  -1.0: Error Handling
+ > Client implementation: 9/14
   -1.0: Usability
   -2.0: Visuals
   -2.0: Complexity/features
@@ -41,6 +40,6 @@ jos korjauksissa joku menny pieleen voi pisteet olla vähemmän.
 
 Pisteitä atm:
 
-Projektista: 42.5
+Projektista: 43.5
 Harjotuksista: 14
-Yhteensä: 56.5
+Yhteensä: 57.5
