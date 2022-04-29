@@ -67,7 +67,7 @@ def put_item(s, control):
     return href
 
 def delete_item(s, control, next_href):
-    print(control)
+
     resp = s.delete(SERVER_URL + control["href"])
 
     if not check_response(resp):
