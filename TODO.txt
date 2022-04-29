@@ -1,0 +1,46 @@
+Mahdollisten korjattavien lista (TODO):
+Kun korjaat, poista rivi ja lisää pisteet. Tämä on sitte vaan arvio, 
+jos korjauksissa joku menny pieleen voi pisteet olla vähemmän.
+
+> D1: 4.5/5
+ -0.5: API description ei oo clear 
+
+> D2: 5/5
+
+> D3: 11/20
+ > Wiki report: 2/4
+  -1.0: Addessability
+  -0.5: Uniform Interface
+  -0.5: Statelesness
+ > Basic Implementation: 7.5/10
+  -0.5: Documentation
+  -2.0: Test coverage
+ > Extras: 1.5/6
+  -0.5: URL Converters (not used in routing)
+  -2.0: Caching
+  -2.0: Authentication
+
+> D4: 9/15
+ > Documentation: 6/6
+ > Hypermedia Design and implementation: 3/9
+  -6.0: Wiki täyttämättä
+
+> D5: 13/35
+ > Client Description: 0/6
+  -6.0: Wiki täyttämättä
+ > Client implementation: 8/14
+  -1.0: Error Handling
+  -1.0: Usability
+  -2.0: Visuals
+  -2.0: Complexity/features
+ > Auxiliary service: 0/10
+
+> D6: 0/5
+ > Analysis and reflection 0/5
+
+
+Pisteitä atm:
+
+Projektista: 42.5
+Harjotuksista: 14
+Yhteensä: 56.5
