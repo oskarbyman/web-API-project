@@ -3,6 +3,7 @@ from flask import Response, request, url_for
 from flask_restful import Resource, Api
 from jsonschema import validate, ValidationError
 from werkzeug.exceptions import NotFound, Conflict, BadRequest, UnsupportedMediaType, MethodNotAllowed, InternalServerError
+from sqlalchemy.exc import IntegrityError
 from typing import Union
 from workoutplanner.models import *
 from workoutplanner import db
