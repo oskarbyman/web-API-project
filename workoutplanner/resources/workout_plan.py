@@ -293,6 +293,7 @@ class WorkoutPlanItem(Resource):
 class WorkoutPlanCollectionBuilder(MasonBuilder):
 
     def add_control_add_workout(self, user):
+        '''POST a new workout for the user'''
         self.add_control_post(
             ctrl_name="workoutplanner:add-workout",
             title="Add a workout",
@@ -304,6 +305,7 @@ class WorkoutPlanCollectionBuilder(MasonBuilder):
 class WorkoutPlanBuilder(MasonBuilder):
 
     def add_control_get_all_move_list_items(self, obj):
+        '''GET all the movelistitems in the workout'''
         self.add_control(
             ctrl_name="workoutplanner:movelistitems-by",
             href=obj.get_url() + "moves/",
@@ -312,6 +314,7 @@ class WorkoutPlanBuilder(MasonBuilder):
         )
 
     def add_control_delete_workout_plan(self, obj):
+        '''DELETE this workout'''
         self.add_control_delete(
             ctrl_name="workoutplanner:delete",
             title="Delete this workout",
@@ -319,6 +322,7 @@ class WorkoutPlanBuilder(MasonBuilder):
         )
 
     def add_control_add_move_list_item(self, obj):
+        '''POST a new movelistitem for this workout'''
         self.add_control_post(
             ctrl_name="workoutplanner:add-movelistitem",
             title="Add a movelist item to this workout",
@@ -327,6 +331,7 @@ class WorkoutPlanBuilder(MasonBuilder):
         )
 
     def add_control_edit_workout_plan(self, obj):
+        '''PUT a workout'''
         self.add_control_put(
             ctrl_name="edit",
             title="Edit this workout",

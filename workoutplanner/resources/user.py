@@ -190,6 +190,7 @@ class UserItem(Resource):
 class UserCollectionBuilder(MasonBuilder):
 
     def add_control_add_user(self):
+        '''POST a new user'''
         self.add_control_post(
             ctrl_name="workoutplanner:add-user",
             title="Add an user",
@@ -202,6 +203,7 @@ class UserCollectionBuilder(MasonBuilder):
 class UserBuilder(MasonBuilder):
 
     def add_control_get_all_moves(self, user):
+        '''GET all the moves of the user'''
         self.add_control(
             ctrl_name="workoutplanner:moves-by",
             href=user.get_url() + "moves/",
@@ -210,6 +212,7 @@ class UserBuilder(MasonBuilder):
         )
 
     def add_control_get_all_workouts(self, user):
+        '''GET all the workouts of the user'''
         self.add_control(
             ctrl_name="workoutplanner:workouts-by",
             href=user.get_url() + "workouts/",
@@ -218,6 +221,7 @@ class UserBuilder(MasonBuilder):
         )
 
     def add_control_delete_user(self, user):
+        '''DELETE this user'''
         self.add_control_delete(
             ctrl_name="workoutplanner:delete",
             title="Delete this user",
@@ -225,6 +229,7 @@ class UserBuilder(MasonBuilder):
         )
 
     def add_control_add_move(self, user):
+        '''POST a new move for this user'''
         self.add_control_post(
             ctrl_name="workoutplanner:add-move",
             title="Add a move for this user",
@@ -233,6 +238,7 @@ class UserBuilder(MasonBuilder):
         )
 
     def add_control_add_workout(self, user):
+        '''POST a new workout for this user'''
         self.add_control_post(
             ctrl_name="workoutplanner:add-workout",
             title="Add a workout for this user",
@@ -241,8 +247,7 @@ class UserBuilder(MasonBuilder):
         )
 
     def add_control_edit_user(self, user):
-        from flask import current_app
-    
+        '''PUT an user'''
         self.add_control_put(
             ctrl_name="edit",
             title="Edit this user",

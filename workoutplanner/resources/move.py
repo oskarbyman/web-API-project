@@ -268,6 +268,7 @@ class MoveItem(Resource):
 class MoveCollectionBuilder(MasonBuilder):
 
     def add_control_add_move(self, user):
+        '''POST a new move'''
         self.add_control_post(
             ctrl_name="workoutplanner:add-move",
             title="Add a move",
@@ -278,6 +279,7 @@ class MoveCollectionBuilder(MasonBuilder):
 class MoveBuilder(MasonBuilder):
 
     def add_control_delete_move(self, obj):
+        '''DELETE a move'''
         self.add_control_delete(
             ctrl_name="workoutplanner:delete",
             title="Delete this move",
@@ -285,6 +287,7 @@ class MoveBuilder(MasonBuilder):
         )
 
     def add_control_edit_move(self, obj):
+        '''PUT a move'''
         self.add_control_put(
             ctrl_name="edit",
             title="Edit this move",
