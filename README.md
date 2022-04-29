@@ -21,6 +21,13 @@
 1. Run the server:
     - `flask run`
 ---
+### Instructions for the client:
+1. Launch local dev server with above instructions
+2. Install requests:
+    - `pip install requests`
+4. Run the client:
+    - `python client.py`
+---
 ### Api entry point: `/api/`
 ---
 ### Instructions for testing:
