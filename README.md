@@ -31,7 +31,6 @@
 ### Api entry point: `/api/`
 ---
 ### Instructions for testing:
-1. Launch local dev server with above instructions
 1. Install python requests with: `pip install --upgrade pytest`
 1. Run tests with: `python -m pytest`
 1. Results are shown in the terminal window
