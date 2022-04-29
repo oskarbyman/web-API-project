@@ -23,16 +23,33 @@ def post_item(s, control):
     properties = fill_schema(schema)   #control["schema"]["properties"]
     #print(properties)
     resp = s.post(SERVER_URL + href, json=properties, headers=headers)
-    print(f"response: {resp.reason}")
+    #print(f"response: {resp.reason}")
     if "Location" in resp.headers:
-        print(resp.headers["Location"])
+        #print(resp.headers["Location"])
         href = resp.headers["Location"]
-    print("#########")
+    #print("#########")
     return href
 
 
 def put_item(s, control):
-    return control["href"]
+    #print(control)
+    href = control["href"]
+    headers={
+        'Content-type':'application/json', 
+        'Accept':'application/json'
+    }
+
+    schema = control["schema"]
+    #print(control["schema"])
+    properties = fill_schema(schema)   #control["schema"]["properties"]
+    #print(properties)
+    resp = s.put(SERVER_URL + href, json=properties, headers=headers)
+    #print(f"response: {resp.reason}")
+    if "Location" in resp.headers:
+        #print(resp.headers["Location"])
+        href = resp.headers["Location"]
+    #print("#########")
+    return href
 
 def delete_item(s, control, next_href):
     print(control)
