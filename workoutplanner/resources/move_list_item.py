@@ -46,8 +46,16 @@ class MoveListItemCollection(Resource):
                         schema:
                             type: string
                             example: /api/users/ProAthlete35/workouts/Light Exercise/moves
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
             '409':
-                description: Movelist item already exists
+                description: Conflict (already exists)
+            '415':
+                description: Unsupported media type
         """
         try:
             if not request.content_type == "application/json":
@@ -156,7 +164,10 @@ class MoveListItemCollection(Resource):
                             creator: ProAthlete35
                             repetitions: 60
                             position: 1
-                            
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
         """
         moves = []
         if user and workout:
@@ -213,7 +224,7 @@ class MoveListItemItem(Resource):
         - $ref: '#/components/parameters/position' 
         - $ref: '#/components/parameters/movelistitem'
         responses:
-            '201':
+            '200':
                 description: Movelist item posted successfully
                 headers:
                     Location: 
@@ -221,8 +232,16 @@ class MoveListItemItem(Resource):
                         schema:
                             type: string
                             example: /api/users/Noob/workouts/Light Exercise/moves/0
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
             '409':
-                description: Movelist already exists
+                description: Conflict (already exists)
+            '415':
+                description: Unsupported media type
         """
 
         if not request.content_type == "application/json":
@@ -318,7 +337,7 @@ class MoveListItemItem(Resource):
         else:
             db.session.commit()
             #return Response(url_for(move_list_item), status=200)
-            return Response(status=201, headers={
+            return Response(status=200, headers={
                 "Location": move_list_item.get_url()#url_for("api.movelistitemitem", user=user, workout=workout, position=new_position)
             })
 
@@ -345,6 +364,10 @@ class MoveListItemItem(Resource):
                             description: Push your body up with your hands
                             repetitions: 20
                             position: 0
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
         """
         if user:
             user_id = User.query.filter_by(username=user).first().id
@@ -378,6 +401,10 @@ class MoveListItemItem(Resource):
         responses:
             '200':
                 description: Move list item deleted successfully
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
         """
         #if user and workout and position:
         if (workout!=None) and (user!=None) and (position!=None):

@@ -46,6 +46,16 @@ class MoveCollection(Resource):
                         schema:
                             type: string
                             example: /api/users/Noob/moves/Plank
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
+            '409':
+                description: Conflict (already exists)
+            '415':
+                description: Unsupported media type
         """
         try:
             if not request.content_type == "application/json":
@@ -58,7 +68,11 @@ class MoveCollection(Resource):
                     raise BadRequest(description=str(err))
 
                 name  = request.json["name"]
-                user_id = User.query.filter_by(username=user).first().id
+                user_obj = User.query.filter_by(username=user).first()
+                if user_obj is None:
+                    raise NotFound
+                user_id = user_obj.id
+                    
                 description = request.json["description"]
                 #  Create a Move object
                 move = Move(name=name, user_id=user_id, description=description)
@@ -120,7 +134,6 @@ class MoveCollection(Resource):
         body.add_control("profile", href=MOVE_COLLECTION_PROFILE_URL)
         
         if user:
-            #body.add_control("collection", href=url_for("api.movecollection"), , title="All moves")
             body.add_control("up", href=user_obj.get_url(), title="Up")
             body.add_control_add_move(user_obj)
         else:
@@ -152,13 +165,23 @@ class MoveItem(Resource):
         - $ref: '#/components/parameters/move'         
         - $ref: '#/components/parameters/moveitem' 
         responses:
-            '201':
+            '200':
                 description: Move edited successfully
                 Location: 
                     description: URI of the move
                     schema:
                         type: string
                         example: /api/users/Noob/moves/Plank
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
+            '409':
+                description: Conflict (already exists)
+            '415':
+                description: Unsupported media type
         """
         try:
             #  Check if PUTting to a specific users move.
@@ -174,7 +197,7 @@ class MoveItem(Resource):
 
                 #  Query the creator id for the move
                 creator_obj = User.query.filter_by(username=user).first()
-                if not creator_obj:
+                if creator_obj is None:
                     raise NotFound
                 creator_id = creator_obj.id
                 #  Query the requested move
@@ -184,8 +207,8 @@ class MoveItem(Resource):
                 move.description = request.json["description"]
 
                 db.session.commit()
-                return Response(status=201, headers={
-                    "Location": move.get_url()#url_for("api.moveitem", user=user, move=request.json["name"])
+                return Response(status=200, headers={
+                    "Location": move.get_url()
                 })
             else:
                 raise MethodNotAllowed
@@ -216,6 +239,10 @@ class MoveItem(Resource):
                         -   name: Plank
                             creator: Noob
                             description: Use your muscles to keep your body in a straight horizontal line
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
         """
         if user and move:
             #  Get user id based on the user given by the URI

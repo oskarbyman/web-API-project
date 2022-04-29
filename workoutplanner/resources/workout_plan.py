@@ -47,8 +47,16 @@ class WorkoutPlanCollection(Resource):
                         schema:
                             type: string
                             example: /api/users/Noob/workouts/Light Excercise
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
             '409':
-                description: Workout plan already exists
+                description: Conflict (already exists)
+            '415':
+                description: Unsupported media type
         """
         try:
             if not user:
@@ -104,6 +112,8 @@ class WorkoutPlanCollection(Resource):
                             creator: Noob
                         -   name: Max Suffering
                             creator: ProAthlete35
+            '404':
+                description: User not found
         """
         #   If user is specified only gets workouts made by the user, else gets them all
         if user:
@@ -152,7 +162,7 @@ class WorkoutPlanItem(Resource):
         - $ref: '#/components/parameters/workout'
         - $ref: '#/components/parameters/workoutitem'
         responses:
-            '201':
+            '200':
                 description: Workout replaced successfully
                 headers:
                     Location:
@@ -160,6 +170,14 @@ class WorkoutPlanItem(Resource):
                         schema:
                             type: string
                             example: /api/users/Noob/workouts/Light Excercise
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
+            '415':
+                description: Unsupported media type
         """
         try:
             if workout and user:
@@ -180,7 +198,7 @@ class WorkoutPlanItem(Resource):
                 current_workout.name = request.json["name"]
 
                 db.session.commit()
-                return Response(status=201, headers={
+                return Response(status=200, headers={
                     "Location": current_workout.get_url()
                 })
             else:
@@ -208,6 +226,8 @@ class WorkoutPlanItem(Resource):
                         example:
                         -   name: Light Exercise
                             creator: Noob
+            '404':
+                description: Not found
         """
 
         if user:
@@ -249,6 +269,10 @@ class WorkoutPlanItem(Resource):
         responses:
             '200':
                 description: Workout plan deleted successfully
+            '404':
+                description: Not found
+            '405':
+                description: Method not allowed
         """
         if workout:
             if user:

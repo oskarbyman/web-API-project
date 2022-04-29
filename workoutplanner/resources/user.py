@@ -43,8 +43,12 @@ class UserCollection(Resource):
                             type: string
                             example: /api/users/Noob
 
+            '400':
+                description: Bad request
             '409':
-                description: User already exists
+                description: Conflict (already exists)
+            '415':
+                description: Unsupported media type
         """
         if not request.content_type == "application/json":
             raise UnsupportedMediaType
@@ -122,6 +126,12 @@ class UserItem(Resource):
                         schema:
                             type: string
                             example: /api/users/Noob
+            '400':
+                description: Bad request
+            '404':
+                description: Not found
+            '415':
+                description: Unsupported media type
         """
         if not request.content_type == "application/json":
             raise UnsupportedMediaType
@@ -132,12 +142,12 @@ class UserItem(Resource):
             raise BadRequest(description=str(err))
 
         current_user = User.query.filter_by(username=user).first()
-        if not current_user:
+        if current_user is None:
             raise NotFound
         current_user.username  = request.json["username"]
 
         db.session.commit()
-        return Response(status=201, headers={
+        return Response(status=200, headers={
             "Location": current_user.get_url()
         })
 
@@ -156,6 +166,8 @@ class UserItem(Resource):
                     application/json:
                         schema:
                             $ref: '#definitions/UserItem'
+            '404':
+                description: Not found
         """
         user_obj = User.query.filter_by(username=user).first()
 
