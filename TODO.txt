@@ -43,3 +43,12 @@ Pisteitä atm:
 Projektista: 43.5
 Harjotuksista: 14
 Yhteensä: 57.5
+
+
+Final Grade: (out of 101)     
+<= 31     0
+32 - 45   1
+46 - 59   2
+60 - 73   3
+74 - 87   4
+>= 88     5
