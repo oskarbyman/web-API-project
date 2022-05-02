@@ -5,6 +5,14 @@ JSON = "application/json"
 MASON = "application/vnd.mason+json"
 
 def check_response(resp):
+    """
+    Print reason for failed request
+
+        Parameters:
+            resp (requests response): Recieved response
+        
+    """
+
     if resp.ok:
         return True
     if resp.status_code == 400:
@@ -21,6 +29,17 @@ def check_response(resp):
 
 
 def get_body(s, href):
+    """
+    Request JSON / MASON from current href
+
+        Parameters:
+            s (requests session): Current session
+            href (str): Selected href
+        
+        Returns:
+            body (dict): Recieved JSON document
+    """
+
     #with requests.Session() as s:
     resp = s.get(SERVER_URL + href)
     if not check_response(resp):
@@ -29,6 +48,17 @@ def get_body(s, href):
     return body
 
 def post_item(s, control):
+    """
+    Add item to collection
+
+        Parameters:
+            s (requests session): Current session
+            control (dict): Selected hypermedia control
+        
+        Returns:
+            href (str): Next href
+    """
+
     href = control["href"]
     headers={
         'Content-type':'application/json', 
@@ -48,6 +78,17 @@ def post_item(s, control):
     return href
 
 def put_item(s, control):
+    """
+    Update item with new data
+
+        Parameters:
+            s (requests session): Current session
+            control (dict): Selected hypermedia control
+        
+        Returns:
+            href (str): Next href
+    """
+
     href = control["href"]
     headers={
         'Content-type':'application/json', 
@@ -67,7 +108,17 @@ def put_item(s, control):
     return href
 
 def delete_item(s, control, next_href):
+    """
+    Delete item
 
+        Parameters:
+            s (requests session): Current session
+            control (dict): Selected hypermedia control
+            next_href (str): Next href if deleting is succesful
+        
+        Returns:
+            next_href (str): Next href
+    """
     resp = s.delete(SERVER_URL + control["href"])
 
     if not check_response(resp):
@@ -77,6 +128,16 @@ def delete_item(s, control, next_href):
 
 
 def fill_schema(json):
+    """
+    Fill fields in inputed JSON schema
+
+        Parameters:
+            json (dict): recieved JSON schema
+        
+        Returns:
+            filled_schema (dict): Schema filled with user inputed data
+    """
+
     print(f"{json['description']}:")
     properties = json["properties"]
     filled_schema = {}
@@ -98,6 +159,18 @@ def fill_schema(json):
     return filled_schema
 
 def get_input(prompt, valueType, required):
+    """
+    Prompt user for response
+
+        Parameters:
+            prompt (str): Text shown to user
+            valueType (Type): Wanted input type
+            required (Bool): Is the input mandatory
+        
+        Returns:
+            user_input (valueType): Input from user
+    """
+
     while True:
         try:
             user_input = input(prompt)
@@ -111,6 +184,16 @@ def get_input(prompt, valueType, required):
             print("Incorrect input!")
 
 def get_object_info(body):
+    """
+    Parse info about current object/href if available
+
+        Parameters:
+            body (dict): recieved JSON/ MASON response
+        
+        Returns:
+            info (str): Information from current href
+    """
+    
     info = ""
     for key in body.keys():
         if key[0] != "@" and key != "items":
@@ -121,6 +204,17 @@ def get_object_info(body):
     return info
 
 def get_controls(controls):
+    """
+    Parse menu items to display from recieved response
+
+        Parameters:
+            controls (dict): recieved JSON/ MASON response
+        
+        Returns:
+            control_keys ([str]): Dict keys for recieved response
+            control_labels ([str]): Labels for showing items in menu
+    """
+
     b_only_controls_with_title=True
 
     keys = list(controls.keys())
@@ -140,6 +234,16 @@ def get_controls(controls):
     return control_keys, control_labels
 
 def get_items(items):
+    """
+    Parse items excluding hypermedia controls from inputed dict.
+
+        Parameters:
+            items (dict): Items from recieved JSON
+        
+        Returns:
+            item_labels ([str]): Labels for foudn items
+    """
+
 
     item_description = ""
 
@@ -158,6 +262,10 @@ def get_items(items):
     return item_labels
 
 def main():
+    """
+    Logic for simple hypermedia client
+    """
+
     s = requests.Session()
 
     #with requests.Session() as s:

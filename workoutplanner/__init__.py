@@ -11,6 +11,10 @@ from workoutplanner.links import *
 # Based on http://flask.pocoo.org/docs/1.0/tutorial/factory/#the-application-factory
 # Modified to use Flask SQLAlchemy
 def create_app(test_config=None):
+    """
+    App factory for the api
+    """
+
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY="dev",

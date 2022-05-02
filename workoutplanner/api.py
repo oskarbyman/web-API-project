@@ -20,6 +20,10 @@ api_bp = Blueprint("api", __name__, url_prefix="/api")
 api = Api(api_bp)
 
 def make_api(app):
+    """
+    Populate api with resources, add converters, api entrypoint and profiles
+    """
+
     #  User resources from resources/user.py
     api.add_resource(UserCollection, "/users/")
     api.add_resource(UserItem, "/users/<user>/")
